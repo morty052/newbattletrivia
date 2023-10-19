@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, View, Image } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
+import testSound from "../assets/wrongcode.mp3";
+import useSound from "../hooks/useSound";
 
 import { useNavigation } from "@react-navigation/native";
 
@@ -24,6 +26,8 @@ function CharacterButton() {
 const BottomNav = ({ open, setOpen, room_id }: Props) => {
   const navigation = useNavigation();
 
+  const play = useSound(testSound);
+
   const menuItems = [
     {
       name: "Characters",
@@ -46,7 +50,7 @@ const BottomNav = ({ open, setOpen, room_id }: Props) => {
   ];
 
   return (
-    <View style={styles.container}>
+    <View className="bg-blue-400" style={styles.container}>
       {/* {menuItems.map((option, key) => (
       ))} */}
       {/* CHARACTER BUTTON */}
@@ -71,6 +75,7 @@ const BottomNav = ({ open, setOpen, room_id }: Props) => {
         style={styles.playButton}
         // onPress={() => navigation.navigate(`${option.to}`)}
         onPress={() => {
+          play();
           setOpen(!open);
         }}
       >
@@ -119,17 +124,17 @@ const styles = StyleSheet.create({
   },
   playButton: {
     flex: 1,
-    backgroundColor: "steelblue",
     justifyContent: "center",
     display: "flex",
     flexDirection: "row",
     paddingVertical: 10,
     borderRadius: 20,
+    backgroundColor: "white",
   },
   playButtonText: {
     fontSize: 25,
     fontWeight: "bold",
-    color: "white",
+    color: "steelblue",
   },
   navbutton: {
     height: 50,

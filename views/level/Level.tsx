@@ -13,7 +13,13 @@ import { player } from "../../types";
 import { character } from "../../types";
 import { useUser } from "@clerk/clerk-react";
 import { TstatusTypes } from "./components/ChoiceList";
-import { Button, Text, View, useWindowDimensions } from "react-native";
+import {
+  Button,
+  Pressable,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { layout } from "../../styles/primary";
 import { useNavigation } from "@react-navigation/native";
 
@@ -325,9 +331,12 @@ const Level = ({ route }) => {
           />
         </View>
       ) : (
-        <View className="flex-1 h-screen bg-black justify-center items-center">
-          <Text className="text-red-600 font-bold etxt-3xl">Game over</Text>
-        </View>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          className="flex-1 h-screen bg-black justify-center items-center"
+        >
+          <Text className="text-red-600 font-bold text-4xl">Game over</Text>
+        </Pressable>
       )}
 
       {/* {lives && lives < 0 && (

@@ -16,8 +16,9 @@ import { SignIn, SignUp, Menu } from "./views";
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { RootSiblingParent } from "react-native-root-siblings";
 import { useUser } from "@clerk/clerk-expo";
-import { Audio } from "expo-av";
 import { useEffect, useState } from "react";
+import useSound from "./hooks/useSound";
+import water from "./assets/waterdrops.mp3";
 
 const Stack = createNativeStackNavigator();
 
@@ -26,23 +27,13 @@ const tw = {
   loginButton:
     "bg-white py-4 px-8 rounded-xl flex flex-row justify-center items-center",
   signupButton:
-    "bg-blue-400 py-4 px-8 rounded-xl flex flex-row justify-center items-center",
+    "bg-yellow-400 py-4 px-8 rounded-xl flex flex-row justify-center items-center",
 };
 
 function HomeScreen({ navigation }: any) {
   const { user, isSignedIn, isLoaded } = useUser();
-  const [sound, setSound] = useState<null | Audio.Sound>();
 
-  async function playSound() {
-    console.log("Loading Sound");
-    const { sound } = await Audio.Sound.createAsync(
-      require("./assets/waterdrops.mp3")
-    );
-    setSound(sound);
-
-    console.log("Playing Sound");
-    await sound.playAsync();
-  }
+  const play = useSound(water);
 
   useEffect(() => {
     // return sound
@@ -51,8 +42,8 @@ function HomeScreen({ navigation }: any) {
     //       sound.unloadAsync();
     //     }
     //   : undefined;
-    playSound();
-  }, []);
+    play();
+  }, [isLoaded]);
 
   if (!isLoaded) {
     return (
@@ -76,6 +67,9 @@ function HomeScreen({ navigation }: any) {
           <Text className="text-2xl text-gray-50 font-medium">
             Go beyond just trivia with friends on the battleground
           </Text>
+          <Pressable onPress={play}>
+            <Text>Play sound</Text>
+          </Pressable>
         </View>
 
         {/* BUTTONS */}
@@ -100,14 +94,16 @@ function HomeScreen({ navigation }: any) {
             </Pressable>
           )}
 
-          <Pressable
-            className={`${tw.signupButton}`}
-            onPress={() => {
-              navigation.navigate("Signup");
-            }}
-          >
-            <Text className="text-black text-3xl font-semibold">Sign Up</Text>
-          </Pressable>
+          {!isSignedIn && (
+            <Pressable
+              className={`${tw.signupButton}`}
+              onPress={() => {
+                navigation.navigate("Signup");
+              }}
+            >
+              <Text className="text-black text-3xl font-semibold">Sign Up</Text>
+            </Pressable>
+          )}
         </View>
       </View>
 

@@ -33,11 +33,12 @@ import OnlineFriends from "../onlinefriends/OnlineFriends";
 import { useNavigation } from "@react-navigation/native";
 import LeaderBoard from "../leaderboard/LeaderBoard";
 import Store from "../store/Store";
+import { AntDesign } from "@expo/vector-icons";
 
 const Stack = createNativeStackNavigator();
 const MenuStack = createNativeStackNavigator();
 
-function MenuOptions({}: any) {
+function MenuOptions({ setOpen }: any) {
   // const { mode } = useParams();
   let mode = null;
   const { socket, _id } = useSocketcontext();
@@ -81,6 +82,7 @@ function MenuOptions({}: any) {
               paddingHorizontal: 10,
               borderRadius: 20,
               backgroundColor: "#FFFFFFAA",
+              position: "relative",
             },
           ]}
         >
@@ -92,14 +94,21 @@ function MenuOptions({}: any) {
                 key={index}
                 styles={{ backgroundColor: "steelblue" }}
                 title={name}
-                onPress={() =>
+                onPress={() => {
+                  setOpen(false);
                   navigation.navigate("Category", {
                     room_id: _id,
-                  })
-                }
+                  });
+                }}
               />
             );
           })}
+          <Pressable
+            onPress={() => setOpen(false)}
+            className="absolute -top-4 -right-1 bg-white p-2 rounded-full"
+          >
+            <AntDesign name="closecircleo" size={24} color="red" />
+          </Pressable>
         </View>
       </View>
     </>
@@ -256,8 +265,8 @@ function MenuScreen({ navigation }: any) {
       {/* OPTIONS  MODAL */}
       <Modal visible={open} transparent={true}>
         <View style={{ flex: 1, backgroundColor: "#000000AA", paddingTop: 50 }}>
-          <Button title="Close modal now" onPress={() => setopen(false)} />
-          <MenuOptions />
+          {/* <Button title="Close modal now" onPress={() => setopen(false)} /> */}
+          <MenuOptions setOpen={setopen} />
         </View>
       </Modal>
     </ImageBackground>
