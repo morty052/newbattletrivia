@@ -19,6 +19,15 @@ import { useUser } from "@clerk/clerk-expo";
 import { useEffect, useState } from "react";
 import useSound from "./hooks/useSound";
 import water from "./assets/waterdrops.mp3";
+import Animated, {
+  useSharedValue,
+  withTiming,
+  useAnimatedStyle,
+  withDelay,
+  withSpring,
+  FadeInUp,
+  FadeOutDown,
+} from "react-native-reanimated";
 
 const Stack = createNativeStackNavigator();
 
@@ -32,18 +41,48 @@ const tw = {
 
 function HomeScreen({ navigation }: any) {
   const { user, isSignedIn, isLoaded } = useUser();
+  const [isOpen, setisOpen] = useState(false);
 
-  const play = useSound(water);
+  const width = useSharedValue<100 | "100%">(100);
+  const height = useSharedValue(100);
+  const x = useSharedValue(0);
+  const y = useSharedValue(4000);
 
-  useEffect(() => {
-    // return sound
-    //   ? () => {
-    //       console.log("Unloading Sound");
-    //       sound.unloadAsync();
-    //     }
-    //   : undefined;
-    play();
-  }, [isLoaded]);
+  const bg = useSharedValue("steelblue");
+
+  function startAnimation() {
+    y.value = withTiming(0, {
+      duration: 500,
+    });
+    width.value = withDelay(1000, withTiming("100%"));
+    height.value = withDelay(1000, withTiming(200));
+  }
+
+  function endAnimation() {
+    y.value = withSpring(4000);
+    width.value = withDelay(1000, withTiming(100));
+    height.value = withDelay(1000, withTiming(100));
+  }
+
+  const animatedStyles = useAnimatedStyle(() => ({
+    backgroundColor: bg.value,
+    width: width.value,
+    height: height.value,
+    borderRadius: 200,
+    transform: [{ translateY: y.value }],
+  }));
+
+  const { play } = useSound(water);
+
+  // useEffect(() => {
+  //   // return sound
+  //   //   ? () => {
+  //   //       console.log("Unloading Sound");
+  //   //       sound.unloadAsync();
+  //   //     }
+  //   //   : undefined;
+  //   play();
+  // }, [isLoaded]);
 
   if (!isLoaded) {
     return (
@@ -67,13 +106,24 @@ function HomeScreen({ navigation }: any) {
           <Text className="text-2xl text-gray-50 font-medium">
             Go beyond just trivia with friends on the battleground
           </Text>
-          <Pressable onPress={play}>
+          <Pressable onPress={() => setisOpen(!isOpen)}>
             <Text>Play sound</Text>
           </Pressable>
         </View>
 
         {/* BUTTONS */}
         <View className=" absolute bottom-20 px-2  flex gap-y-4 w-full ">
+          {/* {isOpen && (
+            <Animated.View
+              entering={FadeInUp}
+              exiting={FadeOutDown}
+              style={animatedStyles}
+            >
+              <Pressable className={``} onPress={endAnimation}>
+                <Text>Animate</Text>
+              </Pressable>
+            </Animated.View>
+          )} */}
           {!isSignedIn ? (
             <Pressable
               className={`${tw.loginButton}`}

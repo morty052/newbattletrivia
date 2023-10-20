@@ -159,7 +159,7 @@ export const SocketContextProvider = ({
   }, [socket]);
 
   if (loading) {
-    return <Text>Loadin</Text>;
+    return <Text>Loading</Text>;
   }
 
   return (

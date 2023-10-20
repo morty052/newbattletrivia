@@ -26,7 +26,7 @@ function CharacterButton() {
 const BottomNav = ({ open, setOpen, room_id }: Props) => {
   const navigation = useNavigation();
 
-  const play = useSound(testSound);
+  const { play } = useSound(testSound);
 
   const menuItems = [
     {

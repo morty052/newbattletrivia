@@ -237,7 +237,11 @@ function Lobby({ route }) {
     category: string;
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
     // TODO: GET USERNAME FROM SOMEWHERE ELSE
     console.log("this is room", room_id);
     socket?.emit("PING_LOBBY", { room_id }, (res: IlobbyPlayerProps) => {
@@ -300,7 +304,7 @@ function Lobby({ route }) {
     socket?.on("PLAYER_READY", (res) => {});
   }, [socket]);
 
-  if (!currentPlayer) {
+  if (!isLoaded || !currentPlayer) {
     return (
       <View style={layout}>
         <Text>...loading</Text>

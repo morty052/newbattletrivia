@@ -4,13 +4,23 @@ import {
   Text,
   ImageSourcePropType,
   StyleSheet,
+  Pressable,
 } from "react-native";
 import { player } from "../../../types";
+import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
 
 type TscreenProps = {
   question: string;
   CurrentPlayer: player | null;
 };
+
+// const width = useSharedValue(10);
+// const height = useSharedValue(10);
+
+// function startAnimation(params: type) {
+//   width.value = withTiming(50);
+//   height.value = withTiming(50);
+// }
 
 const styles = StyleSheet.create({
   container: {
@@ -34,9 +44,11 @@ const { container, questionStyle } = styles;
 
 const Screen = ({ CurrentPlayer, question }: TscreenProps) => {
   return (
-    <View className=" border border-white py-10 relative mb-20  h-52 rounded-lg">
+    <View className=" border border-white py-10 relative mb-20 h-56   rounded-lg">
       <View className="mt-10 px-2 ">
-        <Text style={questionStyle}>{question}</Text>
+        <Text className="text-center text-lg font-bold text-white">
+          {question}
+        </Text>
       </View>
       <View className="absolute right-2 top-2">
         <Image

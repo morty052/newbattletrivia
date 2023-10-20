@@ -26,7 +26,7 @@ const useSound = (soundFile: AVPlaybackSource) => {
     }
   };
 
-  return play;
+  return { play };
 };
 
 export default useSound;
