@@ -9,10 +9,10 @@ import {
 import useSocket from "../hooks/useSocket";
 import SocketReducer, { defaultContextState } from "../reducers/SocketReducer";
 import { Socket } from "socket.io-client";
-import { Text } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useUser } from "@clerk/clerk-expo";
-import { InfoPopup, InvitationModal } from "../components";
-import { host } from "../components/shared/InvitationModal";
+// import InvitationModal from "../components/shared/InvitationModal";
+// import { host } from "../components/shared/InvitationModal";
 import { useNavigation } from "@react-navigation/native";
 
 interface IsocketProps {
@@ -21,6 +21,48 @@ interface IsocketProps {
   SocketDispatch: Dispatch<void>;
   _id: string | null;
 }
+
+type host = {
+  username: string;
+  socket_id: string;
+  _id: string;
+};
+
+type InviteModalProps = {
+  closeModal: () => void;
+  host: host | undefined;
+  socket: Socket;
+};
+
+const InvitationModal = ({ closeModal, host, socket }: InviteModalProps) => {
+  const { user, isLoaded } = useUser();
+  const username = user?.username;
+
+  function handleAccept() {
+    console.log(host);
+    socket?.emit("JOIN_USER", {
+      username,
+      host: host?.username,
+      _id: host?._id,
+    });
+    closeModal();
+  }
+
+  function handleReject() {
+    closeModal();
+  }
+
+  return (
+    <View>
+      <Pressable onPress={closeModal}>
+        <Text>Close Modal</Text>
+      </Pressable>
+      <Pressable style={{ marginTop: 40 }} onPress={handleAccept}>
+        <Text>Accept Invite</Text>
+      </Pressable>
+    </View>
+  );
+};
 
 export const SocketContext = createContext<IsocketProps>({
   socket: null,
@@ -169,6 +211,7 @@ export const SocketContextProvider = ({
       {children}
       {inviteReceived && (
         <InvitationModal
+          socket={socket}
           closeModal={() => setinviteReceived(false)}
           host={host}
         />

@@ -1,5 +1,5 @@
 import { shuffle } from "lodash";
-import { Choice } from ".";
+import Choice from "./Choice";
 import { useSocketcontext } from "../../../hooks/useSocketContext";
 import { useEffect, useState } from "react";
 import { Debuffs } from "../../../types";

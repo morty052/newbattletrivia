@@ -22,10 +22,12 @@ import {
 } from "react-native";
 import { layout } from "../../styles/primary";
 import { useNavigation } from "@react-navigation/native";
+import { Loader } from "../../components";
 
 const Level = ({ route }) => {
   const [GameState, GameDispatch] = useReducer(Levelreducer, LevelState);
   const [confused, setconfused] = useState(false);
+  const [loading, setloading] = useState(false);
   const [statusEffects, setStatusEffects] = useState<TstatusTypes>();
 
   const { socket } = useSocketcontext();
@@ -104,6 +106,7 @@ const Level = ({ route }) => {
     }
 
     socket?.on("RESPONSE_RECEIVED", (res) => {
+      console.log("respone hia");
       // @ts-expect-error
       GameDispatch({
         type: "PROGRESS_LEVEL",
@@ -111,6 +114,10 @@ const Level = ({ route }) => {
           tally: res,
         },
       });
+
+      setTimeout(() => {
+        setloading(false);
+      }, 3000);
     });
 
     socket?.on("PLAYER_DEATH", (res) => {
@@ -258,6 +265,7 @@ const Level = ({ route }) => {
 
   // * SEND ANSWERS TO SERVER REALTIME
   const handleAnswer = (choice: string) => {
+    setloading(true);
     if (choice != correct_answer) {
       decreaseLives();
       return socket?.emit("SELECTED_OPTION", {
@@ -267,6 +275,7 @@ const Level = ({ route }) => {
         username,
         CurrentPlayer,
         correct: false,
+        isPublic,
       });
     }
 
@@ -282,6 +291,7 @@ const Level = ({ route }) => {
         username,
         CurrentPlayer,
         correct: true,
+        isPublic,
       });
     }
 
@@ -314,11 +324,15 @@ const Level = ({ route }) => {
     func: (f) => console.log(f),
   };
 
+  if (loading) {
+    return <Loader />;
+  }
+
   return (
     <>
       {lives && lives > 0 ? (
         <View className=" flex-1 h-screen bg-gray-400 px-2 pt-14 ios:pt-20">
-          {/* <Button title="Go Back" onPress={() => navigation.goBack()} /> */}
+          <Button title="Go Back" onPress={() => navigation.goBack()} />
           <StandardView
             CurrentPlayer={CurrentPlayer}
             OtherPlayers={OtherPlayers}

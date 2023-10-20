@@ -1,6 +1,5 @@
 import { useUser } from "@clerk/clerk-expo";
 import { View, Text, StyleSheet, Pressable } from "react-native";
-import { Socket } from "socket.io-client";
 import { useSocketcontext } from "../../hooks/useSocketContext";
 
 export type host = {

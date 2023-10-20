@@ -1,9 +1,9 @@
 import { player } from "../../../types";
-import { ActionBar, ChoiceList, Screen } from ".";
+import ActionBar from "./actionbar/ActionBar";
+import ChoiceList from "./ChoiceList";
+import Screen from "./Screen";
 import { Socket } from "socket.io-client";
 import { TstatusTypes } from "./ChoiceList";
-import { View } from "react-native";
-import { layout } from "../../../styles/primary";
 
 type IViewProps = {
   CurrentPlayer: player;
