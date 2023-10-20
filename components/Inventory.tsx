@@ -13,16 +13,21 @@ function InventoryItem({
   children: React.ReactNode;
 }) {
   return (
-    <Pressable className="bg-white flex flex-row items-center w-20 px-4 py-2 justify-between rounded-xl ">
-      {children}
-      <Text className="text-lime-600 font-medium">{amount}</Text>
+    <Pressable className="bg-black/40 flex flex-row items-center  w-28 px-2 py-1.5 relative rounded-xl ">
+      <View className="flex flex-row items-center justify-between w-3/4 pr-1">
+        {children}
+        <Text className="text-gray-50 text-xl font-bold">{amount}</Text>
+      </View>
+      <View className="bg-black absolute right-0 rounded-tr-xl rounded-br-xl top-0 bottom-0  w-6    flex justify-center items-center p-1">
+        <FontAwesome name="plus" size={15} color="white" />
+      </View>
     </Pressable>
   );
 }
 
 const Inventory = (props: Props) => {
   return (
-    <View className="bg-black/10  py-8 px-2 flex rounded-xl mt-4">
+    <View className="  flex mt-2  mb-4">
       <View className="w-full flex flex-row justify-between ">
         <InventoryItem amount={1}>
           <FontAwesome name="viacoin" size={25} color="lime" />

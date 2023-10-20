@@ -11,6 +11,7 @@ import {
   Button,
   Inventory,
   Header,
+  ProgressBar,
 } from "../../components";
 import { layout } from "../../styles/primary";
 import Lobby from "../../lobby/Lobby";
@@ -34,6 +35,7 @@ import { useNavigation } from "@react-navigation/native";
 import LeaderBoard from "../leaderboard/LeaderBoard";
 import Store from "../store/Store";
 import { AntDesign } from "@expo/vector-icons";
+import PublicMatch from "../publicmatch/PublicMatch";
 
 const Stack = createNativeStackNavigator();
 const MenuStack = createNativeStackNavigator();
@@ -49,20 +51,32 @@ function MenuOptions({ setOpen }: any) {
     {
       name: "Single Player",
       to: "/room/category",
+      params: {
+        room_id: _id,
+      },
     },
     {
       name: "Public Match",
-      to: "/menu/searchplayers",
+      to: "Publicmatch",
+      params: {
+        room_id: _id,
+      },
     },
     // * SEND USER TO CATEGORY SCREEN INITIALLY
     // * FOR USER TO BE SENT BACK TO CREATEROOM/CREATEDROOMID
     {
       name: "Private match",
-      to: "Privatematch",
+      to: "Category",
+      params: {
+        room_id: _id,
+      },
     },
     {
       name: "Marathon",
-      to: "Privatematch",
+      to: "Category",
+      params: {
+        room_id: _id,
+      },
     },
   ];
 
@@ -87,7 +101,7 @@ function MenuOptions({ setOpen }: any) {
           ]}
         >
           {menuItems.map((option, index: number) => {
-            const { name, to } = option;
+            const { name, to, params } = option;
 
             return (
               <Button
@@ -96,9 +110,7 @@ function MenuOptions({ setOpen }: any) {
                 title={name}
                 onPress={() => {
                   setOpen(false);
-                  navigation.navigate("Category", {
-                    room_id: _id,
-                  });
+                  navigation.navigate(`${to}`, { ...params });
                 }}
               />
             );
@@ -123,39 +135,6 @@ function MenuScreen({ navigation }: any) {
       source={background}
       style={[layout, { position: "relative" }]}
     >
-      {/* {open && (
-        <View style={fBox}>
-          <Button
-            styles={{ backgroundColor: "steelblue" }}
-            title="Single Player"
-            onPress={() => {
-              navigation.navigate("Options");
-            }}
-          />
-
-          <Button
-            styles={{ backgroundColor: "steelblue" }}
-            title="Multi Player"
-            onPress={() => {
-              navigation.navigate("Options");
-            }}
-          />
-          <Button
-            styles={{ backgroundColor: "steelblue" }}
-            title="Private Match"
-            onPress={() => {
-              navigation.navigate("Category");
-            }}
-          />
-          <Button
-            styles={{ backgroundColor: "steelblue" }}
-            title="Change Character"
-            onPress={() => {
-              navigation.navigate("CharacterSelect");
-            }}
-          />
-        </View>
-      )} */}
       {/* HEADER */}
       {/* <View
         style={{
@@ -197,6 +176,9 @@ function MenuScreen({ navigation }: any) {
         <Text>Other Stuff</Text>
       </View> */}
       <Inventory />
+
+      {/* PROGRESS BAR */}
+      <ProgressBar />
 
       {/* TUTORIAL AND GAMEMODE */}
       <View
@@ -521,6 +503,11 @@ function Menu() {
         options={{ headerShown: false }}
         name="Category"
         component={TopicScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name="Publicmatch"
+        component={PublicMatch}
       />
       <Stack.Screen
         options={{ headerShown: false }}

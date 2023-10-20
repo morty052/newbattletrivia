@@ -6,7 +6,7 @@ import { useEffect, useReducer, useState } from "react";
 import { useSocketcontext } from "../../hooks/useSocketContext";
 // import { useParams } from "react-router-dom";
 import { max } from "lodash";
-import { StandardView } from "./components";
+import { StandardView, GameOverScreen } from "./components";
 import { SetPlayers } from "./features";
 import Levelreducer, { LevelState } from "../../reducers/LevelReducer";
 import { player } from "../../types";
@@ -30,7 +30,13 @@ const Level = ({ route }) => {
 
   const { socket } = useSocketcontext();
 
-  const { room_id, category } = route.params;
+  const {
+    room_id,
+    category,
+    public: isPublic,
+    seeker_id,
+    match_id,
+  } = route.params;
   const { width, height } = useWindowDimensions();
 
   const navigation = useNavigation();
@@ -163,7 +169,7 @@ const Level = ({ route }) => {
     socket?.emit(
       "SET_ROOM",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      { room_id, username, category },
+      { room_id, username, category, isPublic, seeker_id, match_id },
       (res: {
         CurrentPlayer: player;
         OtherPlayers: character[];
@@ -311,7 +317,7 @@ const Level = ({ route }) => {
   return (
     <>
       {lives && lives > 0 ? (
-        <View className=" h-screen bg-gray-400 px-2 pt-10 ios:pt-20">
+        <View className=" flex-1 h-screen bg-gray-400 px-2 pt-14 ios:pt-20">
           {/* <Button title="Go Back" onPress={() => navigation.goBack()} /> */}
           <StandardView
             CurrentPlayer={CurrentPlayer}
@@ -331,12 +337,7 @@ const Level = ({ route }) => {
           />
         </View>
       ) : (
-        <Pressable
-          onPress={() => navigation.goBack()}
-          className="flex-1 h-screen bg-black justify-center items-center"
-        >
-          <Text className="text-red-600 font-bold text-4xl">Game over</Text>
-        </Pressable>
+        <GameOverScreen />
       )}
 
       {/* {lives && lives < 0 && (
