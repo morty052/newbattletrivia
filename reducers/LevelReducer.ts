@@ -65,6 +65,7 @@ const Levelreducer = (
           ...action.payload.OtherPlayers,
         ],
         questions: action.payload.questions,
+        scoreBoard: action.payload.scores,
       };
 
     case "FETCH_QUESTIONS":

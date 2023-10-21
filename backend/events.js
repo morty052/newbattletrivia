@@ -812,8 +812,10 @@ export function LobbyEvents(socket, userNamespace) {
 // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
 export function MatchEvents(socket, userNamespace) {
   // * function to increase user points and return user scores
-  const increaseUserPoints = async (room_id, username, incorrect) => {
-    const roomQuery = `*[_type == "rooms" && room_id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`;
+  const increaseUserPoints = async (room_id, username, incorrect, isPublic) => {
+    const roomQuery = !isPublic
+      ? `*[_type == "rooms" && room_id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`
+      : `*[_type == "rooms" && _id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`;
 
     if (incorrect) {
       console.log(incorrect);
@@ -840,6 +842,33 @@ export function MatchEvents(socket, userNamespace) {
             username: player.controller.username,
           };
         });
+
+        const updatedList = players.map((player) => {
+          if (player.controller.username == username) {
+            return {
+              controller: {
+                _type: "reference",
+                _ref: `${player.controller._id}`,
+              },
+              points: player.points,
+            };
+          }
+
+          return {
+            controller: {
+              _type: "reference",
+              _ref: `${player.controller._id}`,
+            },
+            points: player.points,
+          };
+        });
+
+        await client
+          .patch(`${roomID}`)
+          .setIfMissing({ players: [] })
+          .set({ players: updatedList })
+          .commit({ autoGenerateArrayKeys: true });
+
         return new Promise((resolve) => {
           resolve(scores);
         });
@@ -896,14 +925,11 @@ export function MatchEvents(socket, userNamespace) {
     }
   };
 
-  const increasePublicRoomPoints = async (room_id, username, incorrect) => {
+  const increasePublicRoomPoints = async (room_id, username, correct) => {
     const roomQuery = `*[_type == "rooms" && _id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`;
 
-    if (incorrect) {
-      console.log(incorrect);
-    }
-
     try {
+      // * get room
       const room = await client
         .fetch(roomQuery)
         .then((res) => res[0])
@@ -911,26 +937,50 @@ export function MatchEvents(socket, userNamespace) {
           throw () => console.log(error);
         });
 
+      // check if room exists
       if (!room) {
         throw console.log(room);
       }
+      // destructure players and room id from room
       const { players, _id: roomID } = room;
 
       // !DONT ADD POINTS TO ROOM IF INCORRECT
-      if (!incorrect) {
+      if (!correct) {
         const scores = players.map((player) => {
           return {
             points: player.points,
             username: player.controller.username,
           };
         });
+
+        // ! LIST TO ADD POINTS TO ROOM IN SERVER
+        // const updatedList = players.map((player) => {
+        //   if (player.controller.username == username) {
+        //     return {
+        //       controller: {
+        //         _type: "reference",
+        //         _ref: `${player.controller._id}`,
+        //       },
+        //       points: player.points,
+        //     };
+        //   }
+
+        //   return {
+        //     controller: {
+        //       _type: "reference",
+        //       _ref: `${player.controller._id}`,
+        //     },
+        //     points: player.points,
+        //   };
+        // });
         return new Promise((resolve) => {
           resolve(scores);
         });
       }
 
-      // !ONLY ADD POINTS TO ROOM IF NOT INCORRECT
-      if (incorrect) {
+      // !ONLY ADD POINTS TO ROOM IF ITS CORRECT ANSWER
+      if (correct) {
+        console.log("correct equals true", correct);
         // * ADD POINTS TO USER
         // ! LIST OF PLAYERS TO SEND BACK
         const returnList = players.map((player) => {
@@ -1070,6 +1120,12 @@ export function MatchEvents(socket, userNamespace) {
           };
         });
 
+      const scores = players.map((player) => ({
+        username: player.controller.username,
+        points: 0,
+        _id: player.controller._id,
+      }));
+
       if (!room_id) {
         throw console.log("room_id not found, check username and try again");
       }
@@ -1079,6 +1135,7 @@ export function MatchEvents(socket, userNamespace) {
         CurrentPlayer: CurrentPlayer[0],
         OtherPlayers,
         questions,
+        scores,
       });
       console.log("Done setting public room boss");
       return;
@@ -1163,6 +1220,14 @@ export function MatchEvents(socket, userNamespace) {
           };
         });
 
+      const scores = players.map((player) => ({
+        username: player.controller.username,
+        points: 0,
+        _id: player.controller._id,
+      }));
+
+      console.log(scores);
+
       if (!room_id) {
         throw console.log("room_id not found, check username and try again");
       }
@@ -1172,6 +1237,7 @@ export function MatchEvents(socket, userNamespace) {
         CurrentPlayer: CurrentPlayer[0],
         OtherPlayers,
         questions,
+        scores,
       });
     } catch (error) {
       console.log(error);
@@ -1181,57 +1247,191 @@ export function MatchEvents(socket, userNamespace) {
 
   // *HANDLE ANSWER SEND BACK SCORES
   socket.on("SELECTED_OPTION", async (data) => {
-    const { room_id, username, correct, isPublic } = data;
+    const { room_id, username, correct, isPublic, scores } = data;
 
-    if (isPublic) {
-      console.log("this choice is from a public room");
+    const roomQuery = !isPublic
+      ? `*[_type == "rooms" && room_id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`
+      : `*[_type == "rooms" && _id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`;
 
-      const list = await increasePublicRoomPoints(room_id, username, correct);
-      socket.join(room_id);
-      userNamespace.in(room_id).emit("RESPONSE_RECEIVED", list);
-      return;
-    }
+    socket.join(`${room_id}`);
 
     console.log("new choice in", room_id);
 
-    // *DETERMINE IF USER POINTS SHOULD BE INCREASED
-    switch (true) {
-      // * HANDLE CORRECT ANSWER
-      case correct:
-        console.log("correct answer");
-        try {
-          console.log(room_id);
-          if (!room_id || !username) {
-            throw console.log("no room id");
-          }
-
-          // * function to increase both userpoints and return user list
-          const list = await increaseUserPoints(room_id, username, correct);
-          socket.join(room_id);
-          userNamespace.in(room_id).emit("RESPONSE_RECEIVED", list);
-        } catch (error) {
-          console.log(error);
-        }
-        break;
-      // * HANDLE INCORRECT ANSWER
-      case !correct:
-        try {
-          console.log("Incorrect answer");
-          if (!room_id || !username) {
-            throw console.log("no room id");
-          }
-          // * function to increase both userpoints and return user list
-          const list = await increaseUserPoints(room_id, username, correct);
-          socket.join(room_id);
-          userNamespace.in(room_id).emit("RESPONSE_RECEIVED", list);
-        } catch (error) {
-          console.log(error);
-        }
-        break;
-
-      default:
-        break;
+    if (!room_id || !username) {
+      console.log("Fields missing");
+      return;
     }
+
+    if (isPublic) {
+      userNamespace.in(room_id).emit("RESPONSE_RECEIVED", scores);
+
+      const updatedList = scores.map((player) => {
+        return {
+          controller: {
+            _type: "reference",
+            _ref: `${player._id}`,
+          },
+          points: player.points,
+        };
+      });
+
+      const room = await client
+        .fetch(roomQuery)
+        .then((res) => res[0])
+        .catch((error) => {
+          throw "Error while fetching room";
+        });
+
+      const { _id: roomToPatch_id } = room;
+
+      await client
+        .patch(`${roomToPatch_id}`)
+        .setIfMissing({ players: [] })
+        .set({ players: updatedList })
+        .commit({ autoGenerateArrayKeys: true });
+
+      // console.table(scores);
+
+      return;
+    } else {
+      userNamespace.in(room_id).emit("RESPONSE_RECEIVED", scores);
+      console.table(scores);
+    }
+
+    // const roomQuery = !isPublic
+    //   ? `*[_type == "rooms" && room_id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`
+    //   : `*[_type == "rooms" && _id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`;
+
+    // try {
+    //   const room = await client
+    //     .fetch(roomQuery)
+    //     .then((res) => res[0])
+    //     .catch((error) => {
+    //       throw "Error while fetching room";
+    //     });
+
+    //   const { players, _id: roomID } = room;
+
+    //   if (!correct) {
+    //     const scores = players.map((player) => {
+    //       return {
+    //         points: player.points,
+    //         username: player.controller.username,
+    //       };
+    //     });
+
+    //     const updatedList = players.map((player) => {
+    //       return {
+    //         controller: {
+    //           _type: "reference",
+    //           _ref: `${player.controller._id}`,
+    //         },
+    //         points: player.points,
+    //       };
+    //     });
+
+    //     await client
+    //       .patch(`${roomID}`)
+    //       .setIfMissing({ players: [] })
+    //       .set({ players: updatedList })
+    //       .commit({ autoGenerateArrayKeys: true });
+
+    //     userNamespace.in(room_id).emit("RESPONSE_RECEIVED", scores);
+    //     return;
+    //   } else if (correct) {
+    //     const scores = players.map((player) => {
+    //       if (player.controller.username == username) {
+    //         return {
+    //           points: player.points + 10,
+    //           username: player.controller.username,
+    //         };
+    //       }
+
+    //       return {
+    //         points: player.points,
+    //         username: player.controller.username,
+    //       };
+    //     });
+
+    //     const updatedList = players.map((player) => {
+    //       if (player.controller.username == username) {
+    //         return {
+    //           controller: {
+    //             _type: "reference",
+    //             _ref: `${player.controller._id}`,
+    //           },
+    //           points: player.points + 10,
+    //         };
+    //       }
+
+    //       return {
+    //         controller: {
+    //           _type: "reference",
+    //           _ref: `${player.controller._id}`,
+    //         },
+    //         points: player.points,
+    //       };
+    //     });
+
+    //     await client
+    //       .patch(`${roomID}`)
+    //       .setIfMissing({ players: [] })
+    //       .set({ players: updatedList })
+    //       .commit({ autoGenerateArrayKeys: true });
+    //     userNamespace.in(room_id).emit("RESPONSE_RECEIVED", scores);
+    //   }
+    // } catch (error) {
+    //   console.log(error);
+    // }
+
+    // *DETERMINE IF USER POINTS SHOULD BE INCREASED
+    // switch (true) {
+    //   // * HANDLE CORRECT ANSWER
+    //   case correct:
+    //     console.log("correct answer");
+    //     try {
+    //       console.log(room_id);
+    //       if (!room_id || !username) {
+    //         throw console.log("no room id");
+    //       }
+
+    //       // * function to increase both userpoints and return user list
+    //       const list = await increaseUserPoints(
+    //         room_id,
+    //         username,
+    //         correct,
+    //         isPublic
+    //       );
+    //       socket.join(room_id);
+    //       userNamespace.in(room_id).emit("RESPONSE_RECEIVED", list);
+    //     } catch (error) {
+    //       console.log(error);
+    //     }
+    //     break;
+    //   // * HANDLE INCORRECT ANSWER
+    //   case !correct:
+    //     try {
+    //       console.log("Incorrect answer");
+    //       if (!room_id || !username) {
+    //         throw console.log("no room id");
+    //       }
+    //       // * function to increase both userpoints and return user list
+    //       const list = await increaseUserPoints(
+    //         room_id,
+    //         username,
+    //         correct,
+    //         isPublic
+    //       );
+    //       socket.join(room_id);
+    //       userNamespace.in(room_id).emit("RESPONSE_RECEIVED", list);
+    //     } catch (error) {
+    //       console.log(error);
+    //     }
+    //     break;
+
+    //   default:
+    //     break;
+    // }
   });
 
   socket.on("TALLY_GAME", async (data, cb) => {

@@ -20,9 +20,13 @@ const useSound = (soundFile: AVPlaybackSource) => {
   }, [soundFile]);
 
   const play = async () => {
-    if (sound) {
-      await sound.replayAsync();
-      console.log("now playing sound");
+    try {
+      if (sound) {
+        await sound.replayAsync();
+        console.log("now playing sound");
+      } else throw "something went wrong";
+    } catch (error) {
+      console.log(error);
     }
   };
 

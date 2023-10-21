@@ -83,7 +83,8 @@ export const SocketContextProvider = ({
 
   // const socket = useSocket("https://snapdragon-cerulean-pulsar.glitch.me/",{
   const socket = useSocket(
-    "https://snapdragon-cerulean-pulsar.glitch.me/user",
+    // "https://snapdragon-cerulean-pulsar.glitch.me/user",
+    "http://localhost:5000/user",
     {
       reconnectionAttempts: 5,
       reconnectionDelay: 5000,

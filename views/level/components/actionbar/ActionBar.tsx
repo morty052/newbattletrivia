@@ -127,41 +127,25 @@ const ActionBar = ({
   const ActionTray = () => {
     return (
       <View className="p-4 mb-4 rounded-2xl bg-white/70 flex gap-y-4">
-        {scoreBoard.length < 1
+        {/* {scoreBoard.length < 1
           ? OtherPlayers?.map((player, index) => (
               <PlayerInfo key={index} player={player} callDebuff={callDebuff} />
             ))
           : scoreBoard?.map((player, index) => {
               return (
-                // <Pressable
-                //   style={{ flexDirection: "row" }}
-                //   onPress={() => callDebuff(player.controller?.username)}
-                //   key={index}
-                // >
-
-                //   <Pressable
-                //     style={{ flexDirection: "row" }}
-                //     onPress={() => callDebuff(player.username)}
-                //   >
-                //     {/* // * HANDLE  CURRENT  PLAYER */}
-                //     <View>
-                //       {player.username == username ? (
-                //         <Text>y {player.username}</Text>
-                //       ) : (
-                //         <Text>g {player.controller?.username}</Text>
-                //       )}
-                //     </View>
-                //     <Text>{player.points}</Text>
-                //   </Pressable>
-
-                // </Pressable>
                 <PlayerInfo
                   key={index}
                   player={player}
                   callDebuff={callDebuff}
                 />
               );
-            })}
+            })} */}
+
+        {scoreBoard?.map((player, index) => {
+          return (
+            <PlayerInfo key={index} player={player} callDebuff={callDebuff} />
+          );
+        })}
       </View>
     );
   };

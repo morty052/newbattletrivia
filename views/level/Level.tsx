@@ -39,7 +39,6 @@ const Level = ({ route }) => {
     seeker_id,
     match_id,
   } = route.params;
-  const { width, height } = useWindowDimensions();
 
   const navigation = useNavigation();
 
@@ -92,6 +91,21 @@ const Level = ({ route }) => {
 
   const increasePoints = () => {
     CurrentPlayer.increasePoints();
+    const newscores = scoreBoard.map((player: player) => {
+      const { points } = player;
+
+      if (player.username == username) {
+        return {
+          ...player,
+          //  @ts-ignore
+          points: points + 10,
+        };
+      }
+
+      return player;
+    });
+
+    return newscores;
   };
 
   // const handleDebuff = (res) => {
@@ -101,12 +115,12 @@ const Level = ({ route }) => {
   // * HANDLE PLAYER DEATH AND RESPONSE
   // * HANDLE EVENT FIRED AFTER USER PICKS AN ANSWER
   useEffect(() => {
-    if (!CurrentPlayer) {
-      return;
-    }
+    // if (!CurrentPlayer) {
+    //   return;
+    // }
 
     socket?.on("RESPONSE_RECEIVED", (res) => {
-      console.log("respone hia");
+      console.log(res);
       // @ts-expect-error
       GameDispatch({
         type: "PROGRESS_LEVEL",
@@ -114,10 +128,6 @@ const Level = ({ route }) => {
           tally: res,
         },
       });
-
-      setTimeout(() => {
-        setloading(false);
-      }, 3000);
     });
 
     socket?.on("PLAYER_DEATH", (res) => {
@@ -163,7 +173,7 @@ const Level = ({ route }) => {
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, CurrentPlayer]);
+  }, [socket]);
 
   // * SET QUESTIONS AND PLAYER OBJECTS
   useEffect(() => {
@@ -181,8 +191,11 @@ const Level = ({ route }) => {
         CurrentPlayer: player;
         OtherPlayers: character[];
         questions: string[];
+        scores: [];
       }) => {
-        const { CurrentPlayer, OtherPlayers, questions } = res;
+        const { CurrentPlayer, OtherPlayers, questions, scores } = res;
+
+        console.log("this is scores", scores);
 
         const { player, enemies } = SetPlayers(
           CurrentPlayer,
@@ -190,14 +203,16 @@ const Level = ({ route }) => {
           OtherPlayers as player[]
         );
 
-        console.log("this is current player", player.username);
-        console.log("this is other player", enemies[0].username);
-
         // @ts-expect-error
 
         GameDispatch({
           type: "START_GAME",
-          payload: { CurrentPlayer: player, OtherPlayers: enemies, questions },
+          payload: {
+            CurrentPlayer: player,
+            OtherPlayers: enemies,
+            questions,
+            scores,
+          },
         });
       }
     );
@@ -265,7 +280,7 @@ const Level = ({ route }) => {
 
   // * SEND ANSWERS TO SERVER REALTIME
   const handleAnswer = (choice: string) => {
-    setloading(true);
+    // setloading(true);
     if (choice != correct_answer) {
       decreaseLives();
       return socket?.emit("SELECTED_OPTION", {
@@ -276,14 +291,15 @@ const Level = ({ route }) => {
         CurrentPlayer,
         correct: false,
         isPublic,
+        scores: scoreBoard,
       });
     }
 
     // * ONLY INCREASE POINTS IF USER CHOICE IS CORRECT ANSWER
     if (choice == correct_answer) {
-      increasePoints();
+      const newscores = increasePoints();
 
-      // *SEND EVENT TO SERVER
+      // *SEND EVENT AND SCORES TO SERVER
       return socket?.emit("SELECTED_OPTION", {
         choice: choice,
         room_id,
@@ -292,6 +308,7 @@ const Level = ({ route }) => {
         CurrentPlayer,
         correct: true,
         isPublic,
+        scores: newscores,
       });
     }
 

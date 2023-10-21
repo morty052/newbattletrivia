@@ -13,9 +13,7 @@ function PlayerInfo({
       className="flex flex-row items-center  justify-between  mx-auto w-full my-2 border-y py-2.5"
       onPress={() => callDebuff(player.username)}
     >
-      <Text>
-        {player.username ? player.username : player.controller?.username}
-      </Text>
+      <Text>{player.username}</Text>
       <Text>{player.points}</Text>
     </Pressable>
   );

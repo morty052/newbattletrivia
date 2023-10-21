@@ -8,7 +8,12 @@ import { LobbyEvents, MatchEvents } from "./events.js";
 const app = express();
 const server = createServer(app);
 app.use(express.json());
-const io = new Server(server);
+// const io = new Server(server);
+const io = new Server("5000", {
+  cors: {
+    origin: "*",
+  },
+});
 const userNamespace = io.of("/user");
 
 userNamespace.on("connect", (socket) => {
