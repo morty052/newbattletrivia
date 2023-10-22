@@ -322,9 +322,9 @@ const Level = ({ route }) => {
   };
 
   // ?TESTING POWER
-  function callPower(i: string) {
-    socket?.emit("USE_POWER", { power: i, room_id }, (res: string) => {});
-  }
+  // function callPower(i: string) {
+  //   socket?.emit("USE_POWER", { power: i, room_id }, (res: string) => {});
+  // }
 
   const { correct_answer: nextQuestion } =
     level + 1 < questions.length ? questions[level + 1] : [];
