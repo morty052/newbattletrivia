@@ -460,8 +460,6 @@ export function LobbyEvents(socket, userNamespace) {
     const { username, room_id: _id } = data;
     console.log(username, "is looking for a match");
 
-    console.log("this is id", _id);
-
     //  *   GET PLAYERS LOOKING FOR MATCH
     const query = `*[_type == "users" && matchmaking]`;
     const list = await client.fetch(query).then((res) => res);
@@ -575,6 +573,8 @@ export function LobbyEvents(socket, userNamespace) {
     const { username, seeker_id, match_id } = data;
     const roomQuery = `*[_type == "rooms" && references(["${seeker_id}", "${match_id}"])]{_id, range, players[]{...,controller -> {..., character -> {...}}}}`;
     const room = await client.fetch(roomQuery).then((res) => res[0]);
+
+    console.log(room);
 
     const category = "General_knowledge";
 
