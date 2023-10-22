@@ -100,6 +100,11 @@ server.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });
 
+app.get("/", (req, res) => {
+  console.log("request received");
+  res.send("Hello World!");
+});
+
 app.get("/characters", async (req, res) => {
   console.log("request received");
   const query = `*[_type == "characters"]`;

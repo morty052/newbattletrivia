@@ -61,7 +61,7 @@ const Screen = ({ CurrentPlayer, question }: TscreenProps) => {
           }
         />
       </View>
-      <View className="absolute left-2 top-2 p-2 bg-white rounded-xl w-10 h-10 flex justify-center items-center">
+      <View className="absolute left-2 top-2 p-1 bg-white rounded-xl w-20 h-10 flex justify-center items-center">
         <Text>{CurrentPlayer?.points}</Text>
       </View>
     </View>

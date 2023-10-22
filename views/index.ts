@@ -6,6 +6,8 @@ import { default as LeaderBoard } from "./leaderboard/./LeaderBoard";
 import { default as Store } from "./store/Store";
 import { default as SignUp } from "./signup/SignUp";
 import { default as PublicMatch } from "./publicmatch/PublicMatch";
+// import home screen
+import { default as HomeScreen } from "./homescreen/HomeScreen";
 
 export {
   SignIn,
@@ -16,4 +18,5 @@ export {
   Store,
   SignUp,
   PublicMatch,
+  HomeScreen,
 };

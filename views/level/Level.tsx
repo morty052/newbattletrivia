@@ -61,7 +61,7 @@ const Level = ({ route }) => {
 
   // !ORIGINAL FUNCTION
   const { question, correct_answer, incorrect_answers } =
-    questions.length > 1 ? questions[level] : [];
+    questions.length > 1 && level != questions.length ? questions[level] : [];
 
   // ?TESTING NEW OBJECT DESTRUCTURING
   // const { question, correct_answer, incorrect_answers } =
@@ -327,9 +327,9 @@ const Level = ({ route }) => {
   }
 
   const { correct_answer: nextQuestion } =
-    level < 18 ? questions[level + 1] : [];
+    level + 1 < questions.length ? questions[level + 1] : [];
   const { correct_answer: thirdQuestion } =
-    level < 17 ? questions[level + 2] : [];
+    level + 2 < questions.length ? questions[level + 2] : [];
 
   const PowerParams = {
     answer: correct_answer,
