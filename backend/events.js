@@ -462,82 +462,259 @@ export function LobbyEvents(socket, userNamespace) {
 
     console.log("this is id", _id);
 
+    //  *   GET PLAYERS LOOKING FOR MATCH
+    const query = `*[_type == "users" && matchmaking]`;
+    const list = await client.fetch(query).then((res) => res);
+
+    //     * FILTER PLAYER FROM LIST
+    const player = list.filter((player) => player.username == username);
+
+    //    * EXCLUDE PLAYER FROM LIST CUT LIST TO 1 AND GET MATCH
+    const filter = list.filter((player) => player.username != username);
+    const match = filter[0];
+
+    if (!match) {
+      console.log("no match found");
+      cb({
+        message: "NO_MATCH_FOUND",
+        match: [],
+      });
+      return;
+    }
+
+    //    * ADD PLAYER AND MATCH TO NEW LIST
+    const couple = [player[0], match];
+
+    cb({
+      message: "MATCH_FOUND",
+      match: match.username,
+      seeker_id: player[0]._id,
+      match_id: match._id,
+    });
+
+    return;
+
+    //    * RESTRUCTURE PLAYERS
+    const challengers = couple.map((player) => ({
+      controller: {
+        _type: "reference",
+        _ref: `${player._id}`,
+      },
+      points: 0,
+      status: {
+        alive: true,
+      },
+      statuseffects: {
+        none: true,
+      },
+    }));
+
+    const category = "General_knowledge";
+
+    //    * GET RANDOM START AND END OF QUESTIONS ON CMS
+    const { start, end } = generateQuestionsIndex();
+
+    //   *  CREATE ROOM OBJECT
+    const room = {
+      _type: "rooms",
+      room_id: "PUBLIC_ROOM",
+      category: category,
+      range: {
+        start: start,
+        end: end,
+      },
+      players: [...challengers],
+    };
+
+    //     CREATE ROOM ON CMS
+    const room_id = await client
+      .create(room, { autoGenerateArrayKeys: true })
+      .then((res) => res._id);
+
+    //     ADD PLAYER SOCKETS TO CREATED ROOM
+    socket.join(room_id);
+
+    //     SEND BACK TO ROOM
+
+    cb({
+      message: "MATCH_FOUND",
+      match: match.username,
+      room_id,
+      seeker_id: player[0]._id,
+      match_id: match._id,
+      category,
+    });
+
+    console.log("concluded matchmaking algorithm");
+
+    return;
+
+    //     const matchseekerQuery = `*[_type == "users" && _id == "${_id}"]`;
+    //     const seeker = await client.fetch(matchseekerQuery).then((res) => res[0]);
+    //     const { _id: seeker_id } = seeker;
+
+    //     const { _id: match_id } = match;
+
+    //     await client.patch(seeker_id).set({ matchmaking: false }).commit();
+
+    //     await client.patch(match_id).set({ matchmaking: false }).commit();
+
+    // cb({
+    //   seeker_id,
+    //   match_id,
+    //   room_id,
+    //   category,
+    //   match: match.username,
+    // });
+
+    // userNamespace
+    //   .to(`user_${username}`)
+    //   .emit("FRIEND_REQUEST_RECEIVED", { username});
+  });
+  socket.on("ACCEPT_MATCH", async (data, cb) => {
+    const { username, seeker_id, match_id } = data;
+    const roomQuery = `*[_type == "rooms" && references(["${seeker_id}", "${match_id}"])]{_id, range, players[]{...,controller -> {..., character -> {...}}}}`;
+    const room = await client.fetch(roomQuery).then((res) => res[0]);
+
+    const category = "General_knowledge";
+
+    if (!room) {
+      console.log("room not found, safe to create");
+      const { start, end } = generateQuestionsIndex();
+
+      const userQuery = `*[_type == "users" && username == "${username}"]`;
+      const user_id = await client.fetch(userQuery).then((res) => res[0]._id);
+
+      const challenger = [
+        {
+          controller: {
+            _type: "reference",
+            _ref: `${user_id}`,
+          },
+          points: 0,
+          status: {
+            alive: true,
+          },
+          statuseffects: {
+            none: true,
+          },
+          ready: true,
+        },
+      ];
+
+      const room = {
+        _type: "rooms",
+        room_id: "PUBLIC_ROOM",
+        category: category,
+        range: {
+          start: start,
+          end: end,
+        },
+        players: [...challenger],
+      };
+
+      const room_id = await client
+        .create(room, { autoGenerateArrayKeys: true })
+        .then((res) => res._id);
+
+      socket.join(room_id);
+      userNamespace.in(room_id).emit("JOINED_PUBLIC_ROOM", {
+        message: `you ${username} created room ${room_id}`,
+        status: "CREATED",
+        seeker_id,
+        match_id,
+        room_id,
+      });
+
+      return;
+
+      // cb({
+      //   message:`you ${username} created room ${room_id}`,
+      //   status:"CREATED"
+      // });
+    }
+
+    if (room) {
+      const { players, _id } = room;
+
+      const userQuery = `*[_type == "users" && username == "${username}"]`;
+      const user_id = await client.fetch(userQuery).then((res) => res[0]._id);
+
+      const player = players.find(
+        (player) => player.controller.username == username
+      );
+
+      if (!player) {
+        console.log("this is new player");
+      }
+
+      if (player) {
+        console.log("room exist with id", _id);
+        socket.join(_id);
+        userNamespace.in(_id).emit("JOINED_PUBLIC_ROOM", {
+          message: `you ${username} are testing namespace`,
+          status: "JOINED",
+        });
+        return;
+      }
+
+      const newplayer = {
+        controller: {
+          _type: "reference",
+          _ref: `${user_id}`,
+        },
+        points: 0,
+        status: {
+          alive: true,
+        },
+        statuseffects: {
+          none: true,
+        },
+        ready: true,
+      };
+
+      const room_id = await client
+        .patch(_id)
+        .setIfMissing({ players: [] })
+        .insert("after", "players[-1]", [newplayer])
+        .commit({ autoGenerateArrayKeys: true });
+
+      socket.join(_id);
+
+      userNamespace.in(_id).emit("JOINED_PUBLIC_ROOM", {
+        message: `you ${username} created room ${room_id}`,
+        status: "JOINED",
+        seeker_id,
+        match_id,
+        room_id: _id,
+      });
+    }
+  });
+
+  socket.on("TEST_NAME_SPACE", async (data) => {
+    const { room_id, username } = data;
+    console.log("tryig test", room_id);
+
+    userNamespace.to(`${room_id}`).emit("PUBLIC_ROOM", {
+      message: `you ${username} are testing name space`,
+      status: "JOINED",
+      room_id,
+    });
+  });
+
+  socket.on("MATCH_MAKING", async (data, cb) => {
+    const { username, room_id: _id } = data;
+    console.log(username, "is looking for a match");
+
     const matchseekerQuery = `*[_type == "users" && _id == "${_id}"]`;
     const seeker = await client.fetch(matchseekerQuery).then((res) => res[0]);
     const { _id: seeker_id } = seeker;
 
     await client.patch(seeker_id).set({ matchmaking: true }).commit();
 
-    const query = `*[_type == "users" && matchmaking]`;
+    cb("You are now Match making");
 
-    const list = await client.fetch(query).then((res) => res);
-
-    const filter = list.filter((player) => player.username != username);
-
-    const match = filter[0];
-
-    const { _id: match_id } = match;
-
-    const { start, end } = generateQuestionsIndex();
-    const category = "General_knowledge";
-
-    const room = {
-      _type: "rooms",
-      room_id: seeker_id,
-      category: category,
-      range: {
-        start: start,
-        end: end,
-      },
-      players: [
-        {
-          controller: {
-            _type: "reference",
-            _ref: `${seeker_id}`,
-          },
-          points: 0,
-          status: {
-            alive: true,
-          },
-          statuseffects: {
-            none: true,
-          },
-        },
-        {
-          controller: {
-            _type: "reference",
-            _ref: `${match_id}`,
-          },
-          points: 0,
-          status: {
-            alive: true,
-          },
-          statuseffects: {
-            none: true,
-          },
-        },
-      ],
-    };
-
-    await client.patch(seeker_id).set({ matchmaking: false }).commit();
-
-    await client.patch(match_id).set({ matchmaking: false }).commit();
-
-    const room_id = await client
-      .create(room, { autoGenerateArrayKeys: true })
-      .then((res) => res._id);
-
-    cb({
-      seeker_id,
-      match_id,
-      room_id,
-      category,
-      match: match.username,
-    });
-
-    // userNamespace
-    //   .to(`user_${username}`)
-    //   .emit("FRIEND_REQUEST_RECEIVED", { username});
+    return;
   });
 
   socket.on("READY_PLAYER", async (data, cb) => {
@@ -1047,98 +1224,104 @@ export function MatchEvents(socket, userNamespace) {
     // console.log(start, end);
 
     if (isPublic) {
-      console.log("this is a public room");
+      console.log("this is a public room", data);
 
-      let categoryName = category.replace("_", " ");
+      try {
+        if (!category) {
+          throw "category not found";
+        }
 
-      if (!category) {
-        throw console.log("category not found");
-      }
+        if (!seeker_id) {
+          throw "seeker not found";
+        }
 
-      const roomQuery = `*[_type == "rooms" && references(["${seeker_id}", "${match_id}"])]{range, players[]{...,controller -> {..., character -> {...}}}}`;
-      const room = await client.fetch(roomQuery).then((res) => res[0]);
+        let categoryName = category.replace("_", " ");
 
-      if (!room) {
-        throw console.log("Room not found, check room_id and try again");
-      }
+        const roomQuery = `*[_type == "rooms" && references(["${seeker_id}", "${match_id}"])]{range, players[]{...,controller -> {..., character -> {...}}}}`;
+        const room = await client.fetch(roomQuery).then((res) => res[0]);
 
-      const { players, range } = room;
-      const { start, end } = range;
+        if (!room) {
+          throw "Room not found, check room_id and try again";
+        }
 
-      console.table([start, end]);
+        const { players, range } = room;
+        const { start, end } = range;
 
-      // const questionQuery = `*[_type == "questions" && category match "${categoryName}"]`;
-      const questionQuery = `*[_type == "questions" && category match "${categoryName}"][${start}...${end}]`;
+        console.table([start, end]);
 
-      const questions = await client.fetch(questionQuery);
+        // const questionQuery = `*[_type == "questions" && category match "${categoryName}"]`;
+        const questionQuery = `*[_type == "questions" && category match "${categoryName}"][${start}...${end}]`;
 
-      if (questions.length < 1) {
-        throw console.log(
-          "No questions found please check category and try again"
-        );
-      }
+        const questions = await client.fetch(questionQuery);
 
-      if (!username) {
-        throw console.log("username not found, check username and try again");
-      }
+        if (questions.length < 1) {
+          throw "No questions found please check category and try again";
+        }
 
-      const CurrentPlayer = players
-        .filter((player) => player.controller.username == username)
-        .map((player) => {
-          const { traits } = player.controller.character;
-          const { peeks, lives, ultimates } = traits;
-          return {
-            character: player.controller.character,
-            characterAvatar: urlFor(player.controller.character.avatar).url(),
-            username: player.controller.username,
-            points: player.points,
-            lives: lives,
-            peeks: peeks,
-            ultimates: ultimates,
-            status: player.status,
-            statuseffects: player.statuseffects,
-            questions,
-          };
+        if (!username) {
+          throw console.log("username not found, check username and try again");
+        }
+
+        const CurrentPlayer = players
+          .filter((player) => player.controller.username == username)
+          .map((player) => {
+            const { traits } = player.controller.character;
+            const { peeks, lives, ultimates } = traits;
+            return {
+              character: player.controller.character,
+              characterAvatar: urlFor(player.controller.character.avatar).url(),
+              username: player.controller.username,
+              points: player.points,
+              lives: lives,
+              peeks: peeks,
+              ultimates: ultimates,
+              status: player.status,
+              statuseffects: player.statuseffects,
+              questions,
+            };
+          });
+
+        const OtherPlayers = players
+          .filter((player) => player.controller.username != username)
+          .map((player) => {
+            const { traits } = player.controller.character;
+            const { peeks, lives, ultimates } = traits;
+            return {
+              character: player.controller.character,
+              characterAvatar: urlFor(player.controller.character.avatar).url(),
+              username: player.controller.username,
+              points: player.points,
+              lives,
+              peeks,
+              ultimates: ultimates,
+              status: player.status,
+              statuseffects: player.statuseffects,
+              questions,
+            };
+          });
+
+        const scores = players.map((player) => ({
+          username: player.controller.username,
+          points: 0,
+          _id: player.controller._id,
+        }));
+
+        if (!room_id) {
+          throw console.log("room_id not found, check username and try again");
+        }
+        socket.join(room_id);
+
+        cb({
+          CurrentPlayer: CurrentPlayer[0],
+          OtherPlayers,
+          questions,
+          scores,
         });
-
-      const OtherPlayers = players
-        .filter((player) => player.controller.username != username)
-        .map((player) => {
-          const { traits } = player.controller.character;
-          const { peeks, lives, ultimates } = traits;
-          return {
-            character: player.controller.character,
-            characterAvatar: urlFor(player.controller.character.avatar).url(),
-            username: player.controller.username,
-            points: player.points,
-            lives,
-            peeks,
-            ultimates: ultimates,
-            status: player.status,
-            statuseffects: player.statuseffects,
-            questions,
-          };
-        });
-
-      const scores = players.map((player) => ({
-        username: player.controller.username,
-        points: 0,
-        _id: player.controller._id,
-      }));
-
-      if (!room_id) {
-        throw console.log("room_id not found, check username and try again");
+        console.log("Done setting public room boss");
+        return;
+      } catch (error) {
+        console.log(error);
       }
-      socket.join(room_id);
-
-      cb({
-        CurrentPlayer: CurrentPlayer[0],
-        OtherPlayers,
-        questions,
-        scores,
-      });
-      console.log("Done setting public room boss");
-      return;
     }
 
     try {
@@ -1226,7 +1409,7 @@ export function MatchEvents(socket, userNamespace) {
         _id: player.controller._id,
       }));
 
-      console.log(scores);
+      console.table(scores);
 
       if (!room_id) {
         throw console.log("room_id not found, check username and try again");
@@ -1435,25 +1618,29 @@ export function MatchEvents(socket, userNamespace) {
   });
 
   socket.on("TALLY_GAME", async (data, cb) => {
-    const { room_id } = data;
+    const { room_id, scoreBoard } = data;
     const roomQuery = `*[_type == "rooms" && room_id == "${room_id}"]{players[]{...,controller ->  {...}}}`;
 
-    try {
-      const room = await client.fetch(roomQuery).then((res) => res[0]);
+    console.log("game in room", room_id, "has ended");
+    console.table(scoreBoard);
 
-      if (!room) {
-        throw console.log(
-          "Room not found while talying game, check room_id or query"
-        );
-      }
+    //     try {
+    //       const room = await client.fetch(roomQuery).then((res) => res[0]);
 
-      const { players } = room;
-      socket.join(room_id);
+    //       if (!room) {
+    //         throw console.log(
+    //           "Room not found while talying game, check room_id or query"
+    //         );
+    //       }
 
-      cb(players);
-    } catch (error) {
-      console.log(error);
-    }
+    //       const { players } = room;
+    //       socket.join(room_id);
+
+    //       cb(players);
+    //     } catch (error) {
+    //       console.log(error);
+    //     }
+    cb(scoreBoard);
     // io.in(roomID).emit("RESPONSE_RECEIVED", CurrentPlayer);
   });
 

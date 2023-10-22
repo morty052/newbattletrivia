@@ -6,7 +6,7 @@ import { useEffect, useReducer, useState } from "react";
 import { useSocketcontext } from "../../hooks/useSocketContext";
 // import { useParams } from "react-router-dom";
 import { max } from "lodash";
-import { StandardView, GameOverScreen } from "./components";
+import { StandardView, GameOverScreen, WinnerScreen } from "./components";
 import { SetPlayers } from "./features";
 import Levelreducer, { LevelState } from "../../reducers/LevelReducer";
 import { player } from "../../types";
@@ -120,7 +120,6 @@ const Level = ({ route }) => {
     // }
 
     socket?.on("RESPONSE_RECEIVED", (res) => {
-      console.log(res);
       // @ts-expect-error
       GameDispatch({
         type: "PROGRESS_LEVEL",
@@ -195,8 +194,6 @@ const Level = ({ route }) => {
       }) => {
         const { CurrentPlayer, OtherPlayers, questions, scores } = res;
 
-        console.log("this is scores", scores);
-
         const { player, enemies } = SetPlayers(
           CurrentPlayer,
           // @ts-expect-error
@@ -222,8 +219,9 @@ const Level = ({ route }) => {
 
   // * HANDLE QUESTIONS END
   useEffect(() => {
-    if (level == 19) {
-      socket?.emit("TALLY_GAME", { room_id }, (res: any) => {
+    if (level == 20) {
+      console.log("ending  game", level);
+      socket?.emit("TALLY_GAME", { room_id, scoreBoard }, (res: any) => {
         // @ts-expect-error
         const points = Array.from(res, (p) => p.points);
         const highest = max(points);
@@ -239,6 +237,8 @@ const Level = ({ route }) => {
             winner,
           },
         });
+
+        console.log("this is final tally", res);
       });
     }
   }, [level]);
@@ -348,35 +348,37 @@ const Level = ({ route }) => {
 
   return (
     <>
-      {lives && lives > 0 ? (
-        <View className=" flex-1 h-screen bg-gray-400 px-2 pt-14 ios:pt-20">
-          <Button title="Go Back" onPress={() => navigation.goBack()} />
-          <StandardView
-            CurrentPlayer={CurrentPlayer}
-            OtherPlayers={OtherPlayers}
-            choices={incorrect_answers}
-            question={question}
-            correct_answer={correct_answer}
-            handleAnswer={handleAnswer}
-            confused={confused}
-            setconfused={setconfused}
-            setStatusEffects={setStatusEffects}
-            statusEffects={statusEffects}
-            PowerParams={PowerParams}
-            room_id={room_id as string}
-            level={level}
-            scoreBoard={scoreBoard}
-          />
+      <View className="py-8">
+        <Button title="Go Back" onPress={() => navigation.goBack()} />
+      </View>
+      {!ended && (
+        <View className="h-screen flex-1">
+          {lives && lives > 0 ? (
+            <View className=" flex-1 h-screen bg-gray-400 px-2 pt-14 ios:pt-20">
+              <StandardView
+                CurrentPlayer={CurrentPlayer}
+                OtherPlayers={OtherPlayers}
+                choices={incorrect_answers}
+                question={question}
+                correct_answer={correct_answer}
+                handleAnswer={handleAnswer}
+                confused={confused}
+                setconfused={setconfused}
+                setStatusEffects={setStatusEffects}
+                statusEffects={statusEffects}
+                PowerParams={PowerParams}
+                room_id={room_id as string}
+                level={level}
+                scoreBoard={scoreBoard}
+              />
+            </View>
+          ) : (
+            <GameOverScreen />
+          )}
         </View>
-      ) : (
-        <GameOverScreen />
       )}
 
-      {/* {lives && lives < 0 && (
-        <View style={layout}>
-          <Text>Game over</Text>
-        </View>
-      )} */}
+      {ended && <WinnerScreen username={username} scoreBoard={scoreBoard} />}
     </>
   );
 };
