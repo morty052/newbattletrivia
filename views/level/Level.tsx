@@ -326,6 +326,7 @@ const Level = ({ route }) => {
     socket?.emit("USE_POWER", { power: i, room_id }, (res: string) => {});
   }
 
+  // * HANDLE NEXT QUESTION
   const { correct_answer: nextQuestion } =
     level + 1 < questions.length ? questions[level + 1] : [];
   const { correct_answer: thirdQuestion } =
