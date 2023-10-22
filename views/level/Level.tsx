@@ -341,6 +341,7 @@ const Level = ({ route }) => {
     func: (f) => console.log(f),
   };
 
+  // * SHOW  LOADER
   if (loading) {
     return <Loader />;
   }
