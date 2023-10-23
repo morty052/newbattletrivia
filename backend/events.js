@@ -571,10 +571,20 @@ export function LobbyEvents(socket, userNamespace) {
   });
   socket.on("ACCEPT_MATCH", async (data, cb) => {
     const { username, seeker_id, match_id } = data;
-    const roomQuery = `*[_type == "rooms" && references(["${seeker_id}", "${match_id}"])]{_id, range, players[]{...,controller -> {..., character -> {...}}}}`;
-    const room = await client.fetch(roomQuery).then((res) => res[0]);
 
-    console.log(room);
+    if (!username || !seeker_id || !match_id) {
+      console.log("fields  missing");
+      return;
+    }
+
+    const userQuery = `*[_type == "users" && username == "${username}"]`;
+    const user_id = await client.fetch(userQuery).then((res) => res[0]._id);
+
+    if (!user_id) {
+      console.log("user not found");
+    }
+    const roomQuery = `*[_type == "rooms" && references(["${seeker_id}","${match_id}"])]{_id, range, players[]{...,controller -> {..., character -> {...}}}}`;
+    const room = await client.fetch(roomQuery).then((res) => res[0]);
 
     const category = "General_knowledge";
 
@@ -627,14 +637,11 @@ export function LobbyEvents(socket, userNamespace) {
       });
 
       return;
-
-      // cb({
-      //   message:`you ${username} created room ${room_id}`,
-      //   status:"CREATED"
-      // });
     }
 
     if (room) {
+      console.log("room found");
+
       const { players, _id } = room;
 
       const userQuery = `*[_type == "users" && username == "${username}"]`;
@@ -653,7 +660,7 @@ export function LobbyEvents(socket, userNamespace) {
         socket.join(_id);
         userNamespace.in(_id).emit("JOINED_PUBLIC_ROOM", {
           message: `you ${username} are testing namespace`,
-          status: "JOINED",
+          status: "ALREADY_EXISTS",
         });
         return;
       }

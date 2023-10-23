@@ -30,12 +30,12 @@ const Choice = ({
         //   statusEffects && "bg-black text-black"
         // }`}
         onPress={() => {
-          // if (text !== correct_answer) {
-          //   wrongChoiceSound();
-          // }
-          // if (text == correct_answer) {
-          //   successSound();
-          // }
+          if (text !== correct_answer) {
+            wrongChoiceSound();
+          }
+          if (text == correct_answer) {
+            successSound();
+          }
           func();
         }}
       >

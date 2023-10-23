@@ -127,6 +127,8 @@ const Level = ({ route }) => {
           tally: res,
         },
       });
+
+      setloading(false);
     });
 
     socket?.on("PLAYER_DEATH", (res) => {
@@ -280,7 +282,7 @@ const Level = ({ route }) => {
 
   // * SEND ANSWERS TO SERVER REALTIME
   const handleAnswer = (choice: string) => {
-    // setloading(true);
+    setloading(true);
     if (choice != correct_answer) {
       decreaseLives();
       return socket?.emit("SELECTED_OPTION", {

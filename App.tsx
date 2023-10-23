@@ -176,7 +176,7 @@ export default function App() {
   return (
     <ClerkProvider
       publishableKey={
-        "pk_test_dHJ1c3RpbmctZG9ua2V5LTQyLmNsZXJrLmFjY291bnRzLmRldiQ"
+        "pk_test_YWRhcHRlZC1jYW1lbC02Ny5jbGVyay5hY2NvdW50cy5kZXYk"
       }
     >
       <NavigationContainer>

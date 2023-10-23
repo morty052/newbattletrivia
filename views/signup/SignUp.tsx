@@ -25,6 +25,18 @@ const SignUp = () => {
         username,
       });
 
+      await fetch("https://snapdragon-cerulean-pulsar.glitch.me/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: `{
+          "email": "${emailAddress}",
+          "password": "${password}",
+          "username": "${username}"
+        }`,
+      });
+
       navigation.navigate("Home");
 
       // send the email.
