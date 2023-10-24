@@ -161,7 +161,7 @@ const ActionBar = ({
       <View>
         {/* {userTrayOpen && <ActionTray />} */}
         <View>
-          <View className=" flex flex-row justify-between items-center border border-blue-600 px-4 py-4 rounded-xl bg-white">
+          <View className=" flex flex-row justify-between items-center border border-blue-600 px-6 py-4 rounded-xl bg-white">
             <View className="flex flex-row items-center gap-x-2">
               <Entypo name="heart" size={24} color="red" />
               <Text className="text-lg font-medium">{lives}</Text>
@@ -184,7 +184,7 @@ const ActionBar = ({
               <Text className="text-lg font-medium">{ultimateBars}</Text>
             </Pressable>
 
-            <Pressable
+            {/* <Pressable
               className="flex flex-row gap-x-2 items-center"
               onPress={() => handleTray()}
             >
@@ -192,7 +192,7 @@ const ActionBar = ({
               <Text className="text-lg font-medium">
                 {OtherPlayers?.length}
               </Text>
-            </Pressable>
+            </Pressable> */}
           </View>
         </View>
       </View>

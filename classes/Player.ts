@@ -233,7 +233,10 @@ class Player {
         decreasePowerBars();
         break;
       case "Arhuanran":
-        console.info(`${correct_answer}`);
+        Toast.show(`${correct_answer}`, {
+          duration: Toast.durations.LONG,
+          position: 40,
+        });
         decreasePowerBars();
         break;
 
