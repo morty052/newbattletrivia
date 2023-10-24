@@ -3,25 +3,25 @@ import { character } from "@/views/gamemenu/components/CharacterSelect";
 import { Socket } from "socket.io-client";
 
 export type player = {
-  _id: string;
+  _id?: string;
   socket?: string | undefined;
-  username: string;
-  characterAvatar: string;
+  username?: string;
+  characterAvatar?: string;
   alltimescore?: number;
   points?: number;
   lives?: number;
-  ultimates: number;
-  status: "";
-  statuseffects: "";
-  powerBars: number;
-  peeks: number;
-  questions: {
+  ultimates?: number;
+  status?: "";
+  statuseffects?: "";
+  powerBars?: number;
+  peeks?: number;
+  questions?: {
     question: string;
     correct_answer: string;
     incorrect_answers: string[];
   }[];
   partners?: player[];
-  callDebuff: (props: {
+  callDebuff?: (props: {
     target_name: string;
     name: characterName;
     sender: string;
@@ -30,8 +30,8 @@ export type player = {
     target_name: string;
     sender: string;
   };
-  Debuff: (d: Debuffs) => void | undefined;
-  callPowers: (params: {
+  Debuff?: (d: Debuffs) => void | undefined;
+  callPowers?: (params: {
     answer: string;
     nextQuestion: string;
     thirdQuestion: string;
@@ -39,7 +39,7 @@ export type player = {
     roomID: string;
     func: (lives: number, powerBars: number) => void;
   }) => void | undefined;
-  ultimate: (params: {
+  ultimate?: (params: {
     answer: string;
     nextQuestion: string;
     thirdQuestion: string;
@@ -47,9 +47,9 @@ export type player = {
     roomID: string;
     func: (name: string) => void;
   }) => void | undefined;
-  character: character;
-  ultimateBars: number;
-  teamUp: (player: player | undefined) => void;
+  character?: character;
+  ultimateBars?: number;
+  teamUp?: (player: player | undefined) => void;
   controller?: {
     username: string;
     socket?: string;

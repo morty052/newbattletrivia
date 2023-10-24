@@ -121,7 +121,7 @@ export function MiniCharacterSelect({
 function CharacterSelect({
   func,
 }: {
-  func: (character: characterName) => void;
+  func?: (character: characterName) => void;
 }) {
   const state = {
     index: 0,
@@ -332,15 +332,21 @@ function CharacterSelect({
   };
 
   return (
-    // TODO: ADD BACK BUTTON
+    // TODO: CONTROL OUT OF BOUNDS
     <SafeAreaView
       style={{
-        paddingVertical: Platform.OS === "ios" ? 0 : 40,
+        paddingTop: Platform.OS === "ios" ? 0 : 20,
         position: "relative",
         backgroundColor: "white",
       }}
     >
-      <StatusBar style="auto" />
+      <Pressable
+        onPress={() => navigate.goBack()}
+        className="absolute top-14 left-2 bg-black z-50 p-2 rounded-lg"
+      >
+        <Text className="text-white">Back</Text>
+      </Pressable>
+      {/* <StatusBar style="auto" /> */}
       <FlatList
         ref={flatListRef}
         initialNumToRender={1}

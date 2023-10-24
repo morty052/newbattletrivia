@@ -113,17 +113,6 @@ function HomeScreen({ navigation }: any) {
 
         {/* BUTTONS */}
         <View className=" absolute bottom-20 px-2  flex gap-y-4 w-full ">
-          {/* {isOpen && (
-            <Animated.View
-              entering={FadeInUp}
-              exiting={FadeOutDown}
-              style={animatedStyles}
-            >
-              <Pressable className={``} onPress={endAnimation}>
-                <Text>Animate</Text>
-              </Pressable>
-            </Animated.View>
-          )} */}
           {!isSignedIn ? (
             <Pressable
               className={`${tw.loginButton}`}
@@ -154,6 +143,12 @@ function HomeScreen({ navigation }: any) {
               <Text className="text-black text-3xl font-semibold">Sign Up</Text>
             </Pressable>
           )}
+
+          <Pressable onPress={() => navigation.navigate("Menu")}>
+            <Text className="text-yellow-400 text-xl font-black text-center">
+              Continue as guest
+            </Text>
+          </Pressable>
         </View>
       </View>
 

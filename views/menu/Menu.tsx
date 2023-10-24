@@ -36,6 +36,7 @@ import LeaderBoard from "../leaderboard/LeaderBoard";
 import Store from "../store/Store";
 import { AntDesign } from "@expo/vector-icons";
 import PublicMatch from "../publicmatch/PublicMatch";
+import SinglePlayer from "../singleplayer/SinglePlayer";
 
 const Stack = createNativeStackNavigator();
 const MenuStack = createNativeStackNavigator();
@@ -50,7 +51,7 @@ function MenuOptions({ setOpen }: any) {
   const menuItems = [
     {
       name: "Single Player",
-      to: "/room/category",
+      to: "Singleplayer",
       params: {
         room_id: _id,
       },
@@ -255,228 +256,7 @@ function MenuScreen({ navigation }: any) {
   );
 }
 
-// function MenuRoutes() {
-//   return (
-//     <MenuStack.Navigator>
-//       <MenuStack.Screen name="Privatematch" component={Header} />
-//       <MenuStack.Screen name="Options" component={Test} />
-//     </MenuStack.Navigator>
-//   );
-// }
-
-// const Header = () => {
-//   const { isSignedIn, user } = useUser();
-//   return (
-//     <View>
-//       <View>
-//         {/* <UserButton />
-//         <Link to={"/login"}>{isSignedIn ? `${user.username}` : "Sign in"}</Link> */}
-//       </View>
-
-//       <View>
-//         {/* <FaCog />
-//         <FaBell /> */}
-//       </View>
-//     </View>
-//   );
-// };
-
-// type TSearchOnlinePlayersProps = {
-//   players: player[];
-//   handleInvite: (s: string | undefined) => void | undefined;
-//   handleSearchPlayers: () => void;
-// };
-
-// function SearchOnlinePlayers({
-//   players,
-//   handleInvite,
-//   handleSearchPlayers,
-// }: TSearchOnlinePlayersProps) {
-//   return (
-//     <>
-//       {/* ONLINE PLAYERS BOX */}
-//       <View>
-//         <Text>Online players:</Text>
-//         {players?.map((player, index) => (
-//           <Pressable onPress={() => handleInvite(player.socket)} key={index}>
-//             {player.username}
-//           </Pressable>
-//         ))}
-//       </View>
-
-//       {/* ONLINE PLAYERS BUTTON */}
-//       <View>
-//         <Pressable onPress={handleSearchPlayers}>
-//           <Text> Search Online Players</Text>
-//         </Pressable>
-//       </View>
-//     </>
-//   );
-// }
-
-// type TmenuOptionsProps = {
-//   mode:string
-// }
-
-// function Test({ navigation }) {
-//   const { socket } = useSocketcontext();
-
-//   function sendMessage(_id: string) {
-//     socket?.emit("MESSAGE", { _id });
-//   }
-
-//   useEffect(() => {
-//     socket?.on("NEW_MESSAGE", (msg: string) => {
-//       console.log(msg);
-//     });
-//   }, [socket]);
-
-//   return (
-//     <View>
-//       <Pressable onPress={() => navigation.navigate("Options")}>
-//         <Text>Test</Text>
-//       </Pressable>
-//     </View>
-//   );
-// }
-
 function Menu() {
-  const [players, setPlayers] = useState<[] | player[]>([]);
-  const [menuOpen, setmenuOpen] = useState(false);
-
-  // TODO CHANGE LOCATION OF HOST
-  // const [host, sethost] = useState([]);
-
-  const { socket, _id } = useSocketcontext();
-  const { user, isLoaded, isSignedIn } = useUser();
-
-  const [MenuState, MenuDispatch] = useReducer(MenuReducer, defaultMenuState);
-
-  //   const { invitationReceived, host } = MenuState;
-
-  useEffect(() => {
-    //* HANDLE INCOMING INVITATION ON GUEST SIDE
-    socket?.on("INVITATION", (res) => {
-      console.log("inite received");
-      /*
-       * OPEN MODAL / STORE HOST'S USERNAME AND ROOM_ID
-       * ROOM_ID IS ALWAYS THE SAME AS THE HOST'S _ID GOTTEN FROM INVITATION
-       */
-      console.log(res);
-
-      // !ORIGINAL FUNCTION
-      MenuDispatch({ type: "HANDLE_INVITE", payload: res });
-
-      // sethost(res);
-    });
-
-    socket?.on("FRIEND_REQUEST_RECEIVED", (data) => {
-      /*
-       * DISPLAY FRIEND REQUEST
-       TODO: UPDATE NOTIFICATIONS
-       */
-
-      const { username } = data;
-      console.info(`Friend request received from ${username}`);
-    });
-
-    // * HANDLE INVITATION ACCEPTED ON GUEST SIDE
-    // TODO: DO SOMETHING WITH THE ROOM_ID GOTTEN FROM EVENT
-    // TODO GET CATEGORY FROM RES
-    // socket?.on("JOIN_HOST_ROOM", (res) => {
-    //   const { category, _id } = res;
-    //   console.log(res);
-
-    //   window.location.assign(`/lobby/${_id}/${category}`);
-    // });
-  }, [socket, isSignedIn]);
-
-  // useEffect(() => {
-  //   if (isSignedIn) {
-  //     socket?.emit(
-  //       "USER_CONNECTED",
-  //       { username: user?.username },
-  //       (_id: string) => {
-  //         console.log(_id);
-  //         set_id(_id);
-  //       }
-  //     );
-  //   }
-  // }, [socket, isSignedIn]);
-
-  function handleSearchPlayers() {
-    socket?.emit("FINDING_ONLINE_USERS", (res: player[]) => {
-      console.log(res);
-      setPlayers(res);
-    });
-  }
-
-  // function handleInvite(socket_id: string | undefined) {
-  //   socket?.emit("SEND_INVITATION", { socket_id, username });
-  // }
-
-  //   function closeModal() {
-  //     MenuDispatch({ type: "CLOSE_MODAL" });
-  //   }
-
-  // function handleMode(mode:string) {
-  //   if (mode == "OFFLINE") {
-  //     console.log(mode)
-  //     return MenuDispatch({type:'SET_SINGLE_PLAYER'})
-  //   }
-  //  else if (mode == "ONLINE") {
-  //     console.log(mode)
-  //     return MenuDispatch({type:"SET_MULTIPLAYER"})
-  //   }
-
-  // }
-
-  // function MenuRoutes() {
-  //   return (
-  //     <>
-  //       <Routes>
-  //         <Route path="/" element={<GameOptions />} />
-  //         {/* <Route path="/options/:mode" element={<MenuOptions />} /> */}
-
-  //         <Route path="/createroom/category" element={<CreateRoom />} />
-
-  //         <Route path="/createroom/:room_id" element={<CreateRoom />} />
-
-  //         <Route
-  //           path="/searchplayers"
-  //           element={
-  //             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  //             // @ts-ignore
-  //             <SearchOnlinePlayers
-  //               players={players}
-  //               // handleInvite={handleInvite}
-  //               handleSearchPlayers={handleSearchPlayers}
-  //             />
-  //           }
-  //         />
-  //         <Route
-  //           path="/category"
-  //           element={
-  //             <TopicScreen
-  //               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  //               // @ts-ignore
-  //               setcategory={(id: string) => console.log(id)}
-  //               categories={All_Categories}
-  //             />
-  //           }
-  //         />
-  //         <Route
-  //           path="/selectcharacter"
-  //           element={
-  //             <CharacterSelect func={(id: characterName) => console.log(id)} />
-  //           }
-  //         />
-  //         <Route path="/test" element={<Test />} />
-  //       </Routes>
-  //     </>
-  //   );
-  // }
-
   return (
     <MenuStack.Navigator>
       <Stack.Screen
@@ -488,6 +268,11 @@ function Menu() {
         options={{ headerShown: false }}
         name="PrivateMatch"
         component={MenuOptions}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name="Singleplayer"
+        component={SinglePlayer}
       />
       <Stack.Screen
         options={{ headerShown: false }}

@@ -159,7 +159,7 @@ const ActionBar = ({
 
     return (
       <View>
-        {userTrayOpen && <ActionTray />}
+        {/* {userTrayOpen && <ActionTray />} */}
         <View>
           <View className=" flex flex-row justify-between items-center border border-blue-600 px-4 py-4 rounded-xl bg-white">
             <View className="flex flex-row items-center gap-x-2">

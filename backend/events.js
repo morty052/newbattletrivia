@@ -3,6 +3,235 @@ import { io } from "./server.js";
 
 // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
 
+function generateQuestionsIndex() {
+  const randomNumber = Math.floor(Math.random() * 30); // Generate a random number between 0 and 30
+  const number1 = randomNumber;
+  const number2 = randomNumber + 20;
+
+  return {
+    start: number1,
+    end: number2,
+  };
+}
+
+const increaseUserPoints = async (room_id, username, incorrect, isPublic) => {
+  const roomQuery = !isPublic
+    ? `*[_type == "rooms" && room_id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`
+    : `*[_type == "rooms" && _id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`;
+
+  if (incorrect) {
+    console.log(incorrect);
+  }
+
+  try {
+    const room = await client
+      .fetch(roomQuery)
+      .then((res) => res[0])
+      .catch((error) => {
+        throw () => console.log(error);
+      });
+
+    if (!room) {
+      throw console.log(room);
+    }
+    const { players, _id: roomID } = room;
+
+    // !DONT ADD POINTS TO ROOM IF INCORRECT
+    if (!incorrect) {
+      const scores = players.map((player) => {
+        return {
+          points: player.points,
+          username: player.controller.username,
+        };
+      });
+
+      const updatedList = players.map((player) => {
+        if (player.controller.username == username) {
+          return {
+            controller: {
+              _type: "reference",
+              _ref: `${player.controller._id}`,
+            },
+            points: player.points,
+          };
+        }
+
+        return {
+          controller: {
+            _type: "reference",
+            _ref: `${player.controller._id}`,
+          },
+          points: player.points,
+        };
+      });
+
+      await client
+        .patch(`${roomID}`)
+        .setIfMissing({ players: [] })
+        .set({ players: updatedList })
+        .commit({ autoGenerateArrayKeys: true });
+
+      return new Promise((resolve) => {
+        resolve(scores);
+      });
+    }
+
+    // !ONLY ADD POINTS TO ROOM IF NOT INCORRECT
+    if (incorrect) {
+      // * ADD POINTS TO USER
+      // ! LIST OF PLAYERS TO SEND BACK
+      const returnList = players.map((player) => {
+        if (player.controller.username == username) {
+          return {
+            username: player.controller.username,
+            points: player.points + 10,
+          };
+        }
+
+        return player;
+      });
+
+      // ! LIST TO ADD POINTS TO ROOM IN SERVER
+      const updatedList = players.map((player) => {
+        if (player.controller.username == username) {
+          return {
+            controller: {
+              _type: "reference",
+              _ref: `${player.controller._id}`,
+            },
+            points: player.points + 10,
+          };
+        }
+
+        return {
+          controller: {
+            _type: "reference",
+            _ref: `${player.controller._id}`,
+          },
+          points: player.points,
+        };
+      });
+
+      await client
+        .patch(`${roomID}`)
+        .setIfMissing({ players: [] })
+        .set({ players: updatedList })
+        .commit({ autoGenerateArrayKeys: true });
+
+      return new Promise((resolve) => {
+        resolve(returnList);
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const increasePublicRoomPoints = async (room_id, username, correct) => {
+  const roomQuery = `*[_type == "rooms" && _id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`;
+
+  try {
+    // * get room
+    const room = await client
+      .fetch(roomQuery)
+      .then((res) => res[0])
+      .catch((error) => {
+        throw () => console.log(error);
+      });
+
+    // check if room exists
+    if (!room) {
+      throw console.log(room);
+    }
+    // destructure players and room id from room
+    const { players, _id: roomID } = room;
+
+    // !DONT ADD POINTS TO ROOM IF INCORRECT
+    if (!correct) {
+      const scores = players.map((player) => {
+        return {
+          points: player.points,
+          username: player.controller.username,
+        };
+      });
+
+      // ! LIST TO ADD POINTS TO ROOM IN SERVER
+      // const updatedList = players.map((player) => {
+      //   if (player.controller.username == username) {
+      //     return {
+      //       controller: {
+      //         _type: "reference",
+      //         _ref: `${player.controller._id}`,
+      //       },
+      //       points: player.points,
+      //     };
+      //   }
+
+      //   return {
+      //     controller: {
+      //       _type: "reference",
+      //       _ref: `${player.controller._id}`,
+      //     },
+      //     points: player.points,
+      //   };
+      // });
+      return new Promise((resolve) => {
+        resolve(scores);
+      });
+    }
+
+    // !ONLY ADD POINTS TO ROOM IF ITS CORRECT ANSWER
+    if (correct) {
+      console.log("correct equals true", correct);
+      // * ADD POINTS TO USER
+      // ! LIST OF PLAYERS TO SEND BACK
+      const returnList = players.map((player) => {
+        if (player.controller.username == username) {
+          return {
+            username: player.controller.username,
+            points: player.points + 10,
+          };
+        }
+
+        return player;
+      });
+
+      // ! LIST TO ADD POINTS TO ROOM IN SERVER
+      const updatedList = players.map((player) => {
+        if (player.controller.username == username) {
+          return {
+            controller: {
+              _type: "reference",
+              _ref: `${player.controller._id}`,
+            },
+            points: player.points + 10,
+          };
+        }
+
+        return {
+          controller: {
+            _type: "reference",
+            _ref: `${player.controller._id}`,
+          },
+          points: player.points,
+        };
+      });
+
+      await client
+        .patch(`${roomID}`)
+        .setIfMissing({ players: [] })
+        .set({ players: updatedList })
+        .commit({ autoGenerateArrayKeys: true });
+
+      return new Promise((resolve) => {
+        resolve(returnList);
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 function AllEvents(socket) {
   socket.on("handshake", async (data) => {
     const { username } = data;
@@ -996,234 +1225,6 @@ export function LobbyEvents(socket, userNamespace) {
 // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
 export function MatchEvents(socket, userNamespace) {
   // * function to increase user points and return user scores
-  const increaseUserPoints = async (room_id, username, incorrect, isPublic) => {
-    const roomQuery = !isPublic
-      ? `*[_type == "rooms" && room_id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`
-      : `*[_type == "rooms" && _id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`;
-
-    if (incorrect) {
-      console.log(incorrect);
-    }
-
-    try {
-      const room = await client
-        .fetch(roomQuery)
-        .then((res) => res[0])
-        .catch((error) => {
-          throw () => console.log(error);
-        });
-
-      if (!room) {
-        throw console.log(room);
-      }
-      const { players, _id: roomID } = room;
-
-      // !DONT ADD POINTS TO ROOM IF INCORRECT
-      if (!incorrect) {
-        const scores = players.map((player) => {
-          return {
-            points: player.points,
-            username: player.controller.username,
-          };
-        });
-
-        const updatedList = players.map((player) => {
-          if (player.controller.username == username) {
-            return {
-              controller: {
-                _type: "reference",
-                _ref: `${player.controller._id}`,
-              },
-              points: player.points,
-            };
-          }
-
-          return {
-            controller: {
-              _type: "reference",
-              _ref: `${player.controller._id}`,
-            },
-            points: player.points,
-          };
-        });
-
-        await client
-          .patch(`${roomID}`)
-          .setIfMissing({ players: [] })
-          .set({ players: updatedList })
-          .commit({ autoGenerateArrayKeys: true });
-
-        return new Promise((resolve) => {
-          resolve(scores);
-        });
-      }
-
-      // !ONLY ADD POINTS TO ROOM IF NOT INCORRECT
-      if (incorrect) {
-        // * ADD POINTS TO USER
-        // ! LIST OF PLAYERS TO SEND BACK
-        const returnList = players.map((player) => {
-          if (player.controller.username == username) {
-            return {
-              username: player.controller.username,
-              points: player.points + 10,
-            };
-          }
-
-          return player;
-        });
-
-        // ! LIST TO ADD POINTS TO ROOM IN SERVER
-        const updatedList = players.map((player) => {
-          if (player.controller.username == username) {
-            return {
-              controller: {
-                _type: "reference",
-                _ref: `${player.controller._id}`,
-              },
-              points: player.points + 10,
-            };
-          }
-
-          return {
-            controller: {
-              _type: "reference",
-              _ref: `${player.controller._id}`,
-            },
-            points: player.points,
-          };
-        });
-
-        await client
-          .patch(`${roomID}`)
-          .setIfMissing({ players: [] })
-          .set({ players: updatedList })
-          .commit({ autoGenerateArrayKeys: true });
-
-        return new Promise((resolve) => {
-          resolve(returnList);
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const increasePublicRoomPoints = async (room_id, username, correct) => {
-    const roomQuery = `*[_type == "rooms" && _id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`;
-
-    try {
-      // * get room
-      const room = await client
-        .fetch(roomQuery)
-        .then((res) => res[0])
-        .catch((error) => {
-          throw () => console.log(error);
-        });
-
-      // check if room exists
-      if (!room) {
-        throw console.log(room);
-      }
-      // destructure players and room id from room
-      const { players, _id: roomID } = room;
-
-      // !DONT ADD POINTS TO ROOM IF INCORRECT
-      if (!correct) {
-        const scores = players.map((player) => {
-          return {
-            points: player.points,
-            username: player.controller.username,
-          };
-        });
-
-        // ! LIST TO ADD POINTS TO ROOM IN SERVER
-        // const updatedList = players.map((player) => {
-        //   if (player.controller.username == username) {
-        //     return {
-        //       controller: {
-        //         _type: "reference",
-        //         _ref: `${player.controller._id}`,
-        //       },
-        //       points: player.points,
-        //     };
-        //   }
-
-        //   return {
-        //     controller: {
-        //       _type: "reference",
-        //       _ref: `${player.controller._id}`,
-        //     },
-        //     points: player.points,
-        //   };
-        // });
-        return new Promise((resolve) => {
-          resolve(scores);
-        });
-      }
-
-      // !ONLY ADD POINTS TO ROOM IF ITS CORRECT ANSWER
-      if (correct) {
-        console.log("correct equals true", correct);
-        // * ADD POINTS TO USER
-        // ! LIST OF PLAYERS TO SEND BACK
-        const returnList = players.map((player) => {
-          if (player.controller.username == username) {
-            return {
-              username: player.controller.username,
-              points: player.points + 10,
-            };
-          }
-
-          return player;
-        });
-
-        // ! LIST TO ADD POINTS TO ROOM IN SERVER
-        const updatedList = players.map((player) => {
-          if (player.controller.username == username) {
-            return {
-              controller: {
-                _type: "reference",
-                _ref: `${player.controller._id}`,
-              },
-              points: player.points + 10,
-            };
-          }
-
-          return {
-            controller: {
-              _type: "reference",
-              _ref: `${player.controller._id}`,
-            },
-            points: player.points,
-          };
-        });
-
-        await client
-          .patch(`${roomID}`)
-          .setIfMissing({ players: [] })
-          .set({ players: updatedList })
-          .commit({ autoGenerateArrayKeys: true });
-
-        return new Promise((resolve) => {
-          resolve(returnList);
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  function generateQuestionsIndex() {
-    const randomNumber = Math.floor(Math.random() * 30); // Generate a random number between 0 and 30
-    const number1 = randomNumber;
-    const number2 = randomNumber + 20;
-
-    return {
-      start: number1,
-      end: number2,
-    };
-  }
 
   socket.on("SET_ROOM", async (data, cb) => {
     const { room_id, username, category, isPublic, seeker_id, match_id } = data;
@@ -1695,6 +1696,88 @@ export function MatchEvents(socket, userNamespace) {
   socket.on("TIME_UP", (data, cb) => {
     const { choice, roomID, level, username } = data;
     cb(level);
+  });
+}
+
+export function SinglePlayerEvents(socket, userNamespace) {
+  socket.on("SET_SINGLE_PLAYER", async (data, cb) => {
+    const { room_id, username, category, isGuest } = data;
+    const { start, end } = generateQuestionsIndex();
+    // console.log(start, end);
+
+    if (isGuest) {
+      console.log("this is a guest");
+
+      try {
+        if (!category) {
+          throw "category not found";
+        }
+
+        let categoryName = category.replace("_", " ");
+        const questionQuery = `*[_type == "questions" && category match "${categoryName}"][${start}...${end}]`;
+        const questions = await client.fetch(questionQuery);
+
+        if (questions.length < 1) {
+          throw "No questions found please check category and try again";
+        }
+        cb(questions);
+      } catch (error) {}
+
+      return;
+    }
+
+    try {
+      const userQuery = `*[_type == "users" && username == "${username}"]{...,character -> {...}}`;
+      const query = await client.fetch(userQuery);
+
+      if (!category) {
+        throw "category not found";
+      }
+
+      let categoryName = category.replace("_", " ");
+      const questionQuery = `*[_type == "questions" && category match "${categoryName}"][${start}...${end}]`;
+      const questions = await client.fetch(questionQuery);
+
+      const user = await query.map((player) => {
+        const { traits } = player.character;
+        const { peeks, lives, ultimates } = traits;
+        return {
+          character: player.character,
+          characterAvatar: urlFor(player.character.avatar).url(),
+          username: player.username,
+          points: player.points,
+          lives: lives,
+          peeks: peeks,
+          ultimates: ultimates,
+          status: player.status,
+          statuseffects: player.statuseffects,
+          questions,
+        };
+      })[0];
+      console.log(user);
+
+      cb({
+        CurrentPlayer: user,
+        questions,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  });
+
+  socket.on("SELECTED_OPTION_SINGLE", async (data) => {
+    const { username } = data;
+
+    socket.emit("RESPONSE_RECEIVED", { message: "Ready" });
+
+    console.log("single player choice");
+  });
+
+  socket.on("TALLY_SINGLE_PLAYER_GAME", async (data, cb) => {
+    const { points, username } = data;
+
+    console.log("tallying single game", points);
+    cb(points);
   });
 }
 
