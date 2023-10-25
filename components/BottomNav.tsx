@@ -1,7 +1,16 @@
-import { Pressable, StyleSheet, Text, View, Image } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  ImageSourcePropType,
+} from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import testSound from "../assets/wrongcode.mp3";
 import useSound from "../hooks/useSound";
+import { useEffect, useState } from "react";
+import { useUser } from "@clerk/clerk-expo";
 
 import { useNavigation } from "@react-navigation/native";
 
@@ -13,18 +22,53 @@ type Props = {
   room_id: string;
 };
 
-function CharacterButton() {
+function CharacterButton({ uri }: { uri: ImageSourcePropType }) {
   const navigation = useNavigation();
 
   return (
     <Pressable onPress={() => navigation.navigate(`CharacterSelect`)}>
-      <Image source={aroan} style={styles.characterbutton} />
+      <Image
+        source={{
+          uri: uri,
+        }}
+        style={styles.characterbutton}
+      />
     </Pressable>
   );
 }
 
 const BottomNav = ({ open, setOpen, room_id }: Props) => {
   const navigation = useNavigation();
+  const [avatar, setAvatar] = useState<ImageSourcePropType | null>(null);
+  const { isLoaded, user, isSignedIn } = useUser();
+  const username = user?.username;
+  async function fetchUser() {
+    if (!username) {
+      console.log("username not found");
+      return;
+    }
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: `{"username":"${username}"}`,
+    };
+
+    const { avatar } = await fetch(
+      "https://snapdragon-cerulean-pulsar.glitch.me/characterAvatar",
+      options
+    )
+      .then((res) => res.json())
+      .then((res) => res)
+      .catch((err) => console.log(err));
+
+    setAvatar(avatar);
+  }
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
   const { play } = useSound(testSound);
 
@@ -54,7 +98,7 @@ const BottomNav = ({ open, setOpen, room_id }: Props) => {
       {/* {menuItems.map((option, key) => (
       ))} */}
       {/* CHARACTER BUTTON */}
-      <CharacterButton />
+      <CharacterButton uri={avatar} />
 
       {/* ONLINE FRIENDS */}
       <Pressable
