@@ -37,6 +37,8 @@ import Store from "../store/Store";
 import { AntDesign } from "@expo/vector-icons";
 import PublicMatch from "../publicmatch/PublicMatch";
 import SinglePlayer from "../singleplayer/SinglePlayer";
+import Roadmap from "../roadmap/Roadmap";
+import Events from "../events/Events";
 
 const Stack = createNativeStackNavigator();
 const MenuStack = createNativeStackNavigator();
@@ -137,51 +139,16 @@ function MenuScreen({ navigation }: any) {
       style={[layout, { position: "relative" }]}
     >
       {/* HEADER */}
-      {/* <View
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          // backgroundColor: "white",
-          width: "100%",
-          justifyContent: "space-between",
-          paddingVertical: 10,
-          paddingHorizontal: 4,
-          borderRadius: 5,
-        }}
-      >
-        <Pressable onPress={() => navigation.goBack()}>
-          <Entypo name="menu" size={24} color="white" />
-        </Pressable>
-        <View className="flex flex-row gap-x-6 items-center">
-          <FontAwesome name="bell" size={24} color="white" />
-          <FontAwesome name="user" size={24} color="white" />
-        </View>
-      </View> */}
       <Header />
 
       {/* INVENTORY */}
-      {/* <View
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          backgroundColor: "white",
-          width: "100%",
-          justifyContent: "space-between",
-          paddingVertical: 10,
-          paddingHorizontal: 4,
-          borderRadius: 5,
-          marginTop: 20,
-        }}
-      >
-        <Text>Stuff</Text>
-        <Text>Other Stuff</Text>
-      </View> */}
+
       <Inventory />
 
       {/* PROGRESS BAR */}
       <ProgressBar />
 
-      {/* TUTORIAL AND GAMEMODE */}
+      {/* TUTORIAL AND EVENTS */}
       <View
         style={{
           // backgroundColor: "white",
@@ -191,6 +158,7 @@ function MenuScreen({ navigation }: any) {
           justifyContent: "space-between",
         }}
       >
+        {/* TUTORIAL */}
         <Pressable
           style={{
             backgroundColor: "steelblue",
@@ -204,7 +172,11 @@ function MenuScreen({ navigation }: any) {
         >
           <Entypo name="help" size={24} color="white" />
         </Pressable>
+        {/* EVENTS */}
         <Pressable
+          onPress={() => {
+            navigation.navigate("Events");
+          }}
           style={{
             backgroundColor: "steelblue",
             height: 70,
@@ -218,7 +190,7 @@ function MenuScreen({ navigation }: any) {
           <MaterialIcons name="event-note" size={24} color="white" />
         </Pressable>
       </View>
-
+      {/* ROADMAP */}
       <View
         style={{
           // backgroundColor: "white",
@@ -229,6 +201,9 @@ function MenuScreen({ navigation }: any) {
         }}
       >
         <Pressable
+          onPress={() => {
+            navigation.navigate("Roadmap");
+          }}
           style={{
             backgroundColor: "steelblue",
             height: 70,
@@ -313,6 +288,16 @@ function Menu() {
         // options={{ headerShown: false }}
         name="Store"
         component={Store}
+      />
+      <Stack.Screen
+        // options={{ headerShown: false }}
+        name="Roadmap"
+        component={Roadmap}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name="Events"
+        component={Events}
       />
     </MenuStack.Navigator>
   );

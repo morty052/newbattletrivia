@@ -39,6 +39,14 @@ function OnlineFriends({ navigation, route }: any) {
     socket?.emit("FRIEND_REQUEST", { username: target, sender: username });
   }
 
+  // * ACCEPT FRIEND REQUEST
+  function acceptFriendRequest(target: string) {
+    socket?.emit("ACCEPT_FRIEND_REQUEST", {
+      username,
+      sender: target,
+    });
+  }
+
   // * INVITE PLAYER FUNCTION
   function invitePlayer(target_user: string | undefined) {
     /* 
@@ -103,11 +111,8 @@ function OnlineFriends({ navigation, route }: any) {
         .then((res) => res)
         .catch((err) => console.log(err));
 
-      //   CreateRoomDispatch({
-      //     type: "FETCH_PLAYERS",
-      //     payload: { players: players },
-      //   });
       setplayers(players);
+      console.log(players);
     }
 
     fetchFriends();

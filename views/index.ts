@@ -6,9 +6,11 @@ import { default as LeaderBoard } from "./leaderboard/./LeaderBoard";
 import { default as Store } from "./store/Store";
 import { default as SignUp } from "./signup/SignUp";
 import { default as PublicMatch } from "./publicmatch/PublicMatch";
-// import single player
 import { default as SinglePlayer } from "./singleplayer/SinglePlayer";
 import { default as HomeScreen } from "./homescreen/HomeScreen";
+import { default as Roadmap } from "./roadmap/Roadmap";
+// import Events
+import { default as Events } from "./events/Events";
 
 export {
   SignIn,
@@ -21,4 +23,6 @@ export {
   PublicMatch,
   HomeScreen,
   SinglePlayer,
+  Roadmap,
+  Events,
 };

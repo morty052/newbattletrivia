@@ -23,6 +23,9 @@ import {
 import { layout } from "../../styles/primary";
 import { useNavigation } from "@react-navigation/native";
 import { Loader } from "../../components";
+import useSound from "../../hooks/useSound";
+import wrongChoice from "../../assets/wrongcode.mp3";
+import correctChoice from "../../assets/coreectanswer.mp3";
 
 const Level = ({ route }) => {
   const [GameState, GameDispatch] = useReducer(Levelreducer, LevelState);
@@ -31,6 +34,9 @@ const Level = ({ route }) => {
   const [statusEffects, setStatusEffects] = useState<TstatusTypes>();
 
   const { socket } = useSocketcontext();
+
+  const { play: wrongChoiceSound } = useSound(wrongChoice);
+  const { play: successSound } = useSound(correctChoice);
 
   const {
     room_id,
@@ -285,6 +291,7 @@ const Level = ({ route }) => {
     setloading(true);
     if (choice != correct_answer) {
       decreaseLives();
+      wrongChoiceSound();
       return socket?.emit("SELECTED_OPTION", {
         choice: choice,
         room_id,
@@ -299,6 +306,7 @@ const Level = ({ route }) => {
 
     // * ONLY INCREASE POINTS IF USER CHOICE IS CORRECT ANSWER
     if (choice == correct_answer) {
+      successSound();
       const newscores = increasePoints();
 
       // *SEND EVENT AND SCORES TO SERVER
@@ -350,9 +358,9 @@ const Level = ({ route }) => {
 
   return (
     <>
-      <View className="py-8">
+      {/* <View className="py-8">
         <Button title="Go Back" onPress={() => navigation.goBack()} />
-      </View>
+      </View> */}
       {!ended && (
         <View className="h-screen flex-1">
           {lives && lives > 0 ? (
