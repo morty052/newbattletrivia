@@ -227,7 +227,7 @@ const Level = ({ route }) => {
 
   // * HANDLE QUESTIONS END
   useEffect(() => {
-    if (level == 20) {
+    if (level == 2) {
       console.log("ending  game", level);
       socket?.emit("TALLY_GAME", { room_id, scoreBoard }, (res: any) => {
         // @ts-expect-error

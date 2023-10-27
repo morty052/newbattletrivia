@@ -1,5 +1,8 @@
 import client, { urlFor } from "./client.js";
 import { io } from "./server.js";
+import tallyScore from "./utils/tallyScore.js";
+import getUser from "./utils/getUser.js";
+import addFriend from "./utils/addFriend.js";
 
 // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
 
@@ -514,17 +517,6 @@ function AllEvents(socket) {
 export function LobbyEvents(socket, userNamespace) {
   // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
 
-  function generateQuestionsIndex() {
-    const randomNumber = Math.floor(Math.random() * 30); // Generate a random number between 0 and 30
-    const number1 = randomNumber;
-    const number2 = randomNumber + 20;
-
-    return {
-      start: number1,
-      end: number2,
-    };
-  }
-
   socket.on("PING_LOBBY", async (data, cb) => {
     // * DESTRUCTURE CREATED ROOM_ID FROM EVENT DATA
     // ! ROOM_ID IS SAME AS ID OF HOST
@@ -675,14 +667,42 @@ export function LobbyEvents(socket, userNamespace) {
     const { username, sender } = data;
     console.log("there is a friend request for > ", username);
 
+    const { user: senderName } = await getUser(sender);
+    const { user } = await getUser(username);
+
+    console.log(user);
+    const { _id } = user;
+    const { _id: senderID } = senderName;
+    await client
+      .patch(_id)
+      .setIfMissing({ friendrequests: [] })
+      .insert("after", "friendrequests[-1]", [
+        { sender: { _type: "reference", _ref: senderID }, accepted: false },
+      ])
+      .commit({ autoGenerateArrayKeys: true });
+
+    // userNamespace
+    //   .to(`user_${username}`)
+    //   .emit("FRIEND_REQUEST_RECEIVED", { username: sender });
+
     userNamespace
       .to(`user_${username}`)
-      .emit("FRIEND_REQUEST_RECEIVED", { username: sender });
+      .emit("NEW_MESSAGE", { sender, accepted: false });
 
     // TODO: ADD FRIEND REQUEST TO DATABASE
     function addFriendRequest(params) {
       // .......
     }
+  });
+
+  socket.on("ACCEPT_FRIEND_REQUEST", async (data) => {
+    const { username, sender } = data;
+    console.log("accepted request");
+    await addFriend(username, sender);
+
+    userNamespace
+      .to(`user_${username}`)
+      .emit("NEW_MESSAGE", { sender, accepted: false });
   });
 
   socket.on("FIND_MATCH", async (data, cb) => {
@@ -798,6 +818,7 @@ export function LobbyEvents(socket, userNamespace) {
     //   .to(`user_${username}`)
     //   .emit("FRIEND_REQUEST_RECEIVED", { username});
   });
+
   socket.on("ACCEPT_MATCH", async (data, cb) => {
     const { username, seeker_id, match_id } = data;
 
@@ -1225,7 +1246,6 @@ export function LobbyEvents(socket, userNamespace) {
 // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
 export function MatchEvents(socket, userNamespace) {
   // * function to increase user points and return user scores
-
   socket.on("SET_ROOM", async (data, cb) => {
     const { room_id, username, category, isPublic, seeker_id, match_id } = data;
     // const { start, end } = generateQuestionsIndex();
@@ -1632,22 +1652,9 @@ export function MatchEvents(socket, userNamespace) {
     console.log("game in room", room_id, "has ended");
     console.table(scoreBoard);
 
-    //     try {
-    //       const room = await client.fetch(roomQuery).then((res) => res[0]);
-
-    //       if (!room) {
-    //         throw console.log(
-    //           "Room not found while talying game, check room_id or query"
-    //         );
-    //       }
-
-    //       const { players } = room;
-    //       socket.join(room_id);
-
-    //       cb(players);
-    //     } catch (error) {
-    //       console.log(error);
-    //     }
+    scoreBoard.forEach(async (player) => {
+      await tallyScore(player.username, player.points);
+    });
     cb(scoreBoard);
     // io.in(roomID).emit("RESPONSE_RECEIVED", CurrentPlayer);
   });
@@ -1754,7 +1761,6 @@ export function SinglePlayerEvents(socket, userNamespace) {
           questions,
         };
       })[0];
-      console.log(user);
 
       cb({
         CurrentPlayer: user,
@@ -1769,15 +1775,14 @@ export function SinglePlayerEvents(socket, userNamespace) {
     const { username } = data;
 
     socket.emit("RESPONSE_RECEIVED", { message: "Ready" });
-
-    console.log("single player choice");
   });
 
   socket.on("TALLY_SINGLE_PLAYER_GAME", async (data, cb) => {
     const { points, username } = data;
 
-    console.log("tallying single game", points);
-    cb(points);
+    const { NewScore } = await tallyScore(username, points);
+
+    cb(NewScore);
   });
 }
 
