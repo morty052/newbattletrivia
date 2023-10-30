@@ -3,18 +3,9 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { player } from "../../../../types/player";
 import { useReducer, useEffect } from "react";
-// import {
-//   FaCircle,
-//   FaHeart,
-//   FaSearch,
-//   FaStar,
-//   FaUser,
-//   FaUserFriends,
-// } from "react-icons/fa";
 import { Socket } from "socket.io-client";
 import { useSocketcontext } from "../../../../hooks/useSocketContext";
 import { character, Debuffs, TstatusTypes } from "../../../../types";
-// import { message } from "antd";
 import { View, Text, Pressable } from "react-native/";
 import { Entypo } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -29,39 +20,18 @@ interface TactionBarProps {
   scoreBoard: player[];
   room_id: string;
   level: number;
-  confused: boolean;
-  setconfused: (c: boolean) => void;
-  statusEffects: TstatusTypes | undefined;
-  setStatusEffects: (e: TstatusTypes) => void | undefined;
-  PowerParams: {
-    answer: string;
-    nextQuestion: string;
-    thirdQuestion: string;
-    socket: Socket;
-    roomID: string;
-    func: (lives: number, powerBars: number) => void;
-  };
 }
 
 const ActionBar = ({
   CurrentPlayer,
   OtherPlayers,
-  PowerParams,
   scoreBoard,
   room_id,
   level,
 }: TactionBarProps) => {
   // destructure display numbers and user powers from player class passed as props
-  const {
-    lives,
-    powerBars,
-    callPowers,
-    ultimate,
-    character,
-    ultimateBars,
-    ultimates,
-    username,
-  }: player = CurrentPlayer && CurrentPlayer;
+  const { lives, powerBars, callPowers, character, ultimateBars }: player =
+    CurrentPlayer && CurrentPlayer;
   const { name } = character && character;
 
   const { socket } = useSocketcontext();
@@ -73,7 +43,7 @@ const ActionBar = ({
     });
   }
 
-  //* FUNCTION TO DETERMINE SENDER DEBUFF TYPES AND TARGET
+  //* FUNCTION TO DETERMINE SENDER, DEBUFF TYPES, AND TARGET
   function callDebuff(target: string | undefined) {
     const { character } = CurrentPlayer;
     const { name } = character;
@@ -92,7 +62,7 @@ const ActionBar = ({
       "DEBUFF",
       { debuff, target_name, room_id, sender },
       (res: string) => {
-        console.log(res);
+        console.log("res from debuff", res);
       }
     );
   }
@@ -139,23 +109,10 @@ const ActionBar = ({
   };
 
   const MainActionBar = () => {
-    // const { answer, nextQuestion, thirdQuestion, socket, roomID } = PowerParams;
-
     const params = {
       level,
       func: () => ActionDispatch({ type: "USE_POWER" }),
     };
-
-    // const Superparams = {
-    //   answer,
-    //   nextQuestion,
-    //   thirdQuestion,
-    //   socket,
-    //   roomID,
-    //   // func: (lives:number, powerbars:number) => ActionDispatch({ type: "USE_ULTIMATE", payload:{lives:lives,powerBars:powerbars}}),
-    //   func: (name: string) =>
-    //     ActionDispatch({ type: "USE_ULTIMATE", payload: { name } }),
-    // };
 
     return (
       <View>

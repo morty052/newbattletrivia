@@ -231,12 +231,6 @@ const Level = ({ route }) => {
       // }
     });
 
-    socket?.on("DEBUFF_USED", (res) => {
-      // handleDebuff(res);
-      // CurrentPlayer.Debuff(res);
-      console.log("debuff used");
-    });
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket]);
 
@@ -392,11 +386,6 @@ const Level = ({ route }) => {
     // });
   };
 
-  // ?TESTING POWER
-  // function callPower(i: string) {
-  //   socket?.emit("USE_POWER", { power: i, room_id }, (res: string) => {});
-  // }
-
   const { correct_answer: nextQuestion } =
     level + 1 < questions.length ? questions[level + 1] : [];
   const { correct_answer: thirdQuestion } =
@@ -433,11 +422,8 @@ const Level = ({ route }) => {
                 question={question}
                 correct_answer={correct_answer}
                 handleAnswer={handleAnswer}
-                confused={confused}
-                setconfused={setconfused}
                 setStatusEffects={setStatusEffects}
                 statusEffects={statusEffects}
-                PowerParams={PowerParams}
                 room_id={room_id as string}
                 level={level}
                 scoreBoard={scoreBoard}

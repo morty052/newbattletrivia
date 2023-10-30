@@ -15,16 +15,6 @@ type IViewProps = {
   scoreBoard: [];
   room_id: string;
   level: number;
-  setconfused: (c: boolean) => void;
-  confused: boolean;
-  PowerParams: {
-    answer: string;
-    nextQuestion: string;
-    thirdQuestion: string;
-    socket: Socket;
-    roomID: string;
-    func: (lives: number, powerBars: number) => void;
-  };
   statusEffects: TstatusTypes | undefined;
   setStatusEffects: (e: TstatusTypes) => void | undefined;
 };
@@ -37,11 +27,8 @@ const StandardView = ({
   handleAnswer,
   correct_answer,
   scoreBoard,
-  PowerParams,
   room_id,
   level,
-  confused,
-  setconfused,
   setStatusEffects,
   statusEffects,
 }: IViewProps) => {
@@ -52,20 +39,13 @@ const StandardView = ({
       <ChoiceList
         setStatusEffects={setStatusEffects}
         statusEffects={statusEffects}
-        confused={confused}
-        setconfused={setconfused}
         correct_answer={correct_answer}
         handleAnswer={handleAnswer}
         choices={choices}
       />
       <ActionBar
-        setStatusEffects={setStatusEffects}
-        statusEffects={statusEffects}
-        confused={confused}
-        setconfused={setconfused}
         level={level}
         room_id={room_id}
-        PowerParams={PowerParams}
         CurrentPlayer={CurrentPlayer}
         OtherPlayers={OtherPlayers}
         scoreBoard={scoreBoard}

@@ -12,8 +12,6 @@ type Props = {
   choices: string[];
   handleAnswer: (c: string) => void;
   correct_answer: string;
-  setconfused: (c: boolean) => void;
-  confused: boolean;
   statusEffects: TstatusTypes | undefined;
   setStatusEffects: (e: TstatusTypes) => void | undefined;
 };
@@ -30,8 +28,6 @@ const ChoiceList = ({
   choices,
   handleAnswer,
   correct_answer,
-  confused,
-  setconfused,
   statusEffects,
   setStatusEffects,
 }: Props) => {
@@ -77,7 +73,6 @@ const ChoiceList = ({
           console.info(`${sender} ${debuff} you from choicelist`);
 
           // APPLY DEBUFF
-          setconfused(true);
           setStatusEffects("brainstorming");
         }
       }
@@ -93,8 +88,7 @@ const ChoiceList = ({
   */
   const handleAnswerinteraction = (i: string) => {
     // *STATUS EFFECT CHECK
-    if (confused || status) {
-      setconfused(false);
+    if (status) {
       setStatusEffects("none");
       status = null;
     }
@@ -112,7 +106,6 @@ const ChoiceList = ({
           statusEffects={status}
           func={() => handleAnswerinteraction(i)}
           text={!status ? i : shitText}
-          // text={!revealed ? i : correct_answer}
           key={index}
         />
       ))}
