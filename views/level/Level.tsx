@@ -306,7 +306,7 @@ const Level = ({ route }) => {
   // * HANDLE LAST PLAYER STANDING
   useEffect(() => {
     if (allPlayers.length == 1) {
-      socket?.emit("TALLY_GAME", { room_id }, (res: any) => {
+      socket?.emit("TALLY_GAME", { room_id, scoreBoard }, (res: any) => {
         const points = Array.from(scoreBoard, (p: player) => p.points);
         const highest = points.reduce((acc, curr) => Math.max(acc, curr), 0);
 

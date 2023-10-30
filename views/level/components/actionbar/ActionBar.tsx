@@ -101,7 +101,14 @@ const ActionBar = ({
         {scoreBoard &&
           scoreBoard?.map((player, index) => {
             return (
-              <PlayerInfo key={index} player={player} callDebuff={callDebuff} />
+              <PlayerInfo
+                CurrentPlayer={
+                  CurrentPlayer.username == player.username && true
+                }
+                key={index}
+                player={player}
+                callDebuff={callDebuff}
+              />
             );
           })}
       </View>
