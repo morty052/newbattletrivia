@@ -9,9 +9,9 @@ import {
 import useSocket from "../hooks/useSocket";
 import SocketReducer, { defaultContextState } from "../reducers/SocketReducer";
 import { Socket } from "socket.io-client";
-import { Pressable, Text, View } from "react-native";
+import { Modal, Pressable, Text, View } from "react-native";
 import { useUser } from "@clerk/clerk-expo";
-// import InvitationModal from "../components/shared/InvitationModal";
+import InvitationModal from "../components/shared/InvitationModal";
 // import { host } from "../components/shared/InvitationModal";
 import { useNavigation } from "@react-navigation/native";
 
@@ -34,35 +34,37 @@ type InviteModalProps = {
   socket: Socket;
 };
 
-const InvitationModal = ({ closeModal, host, socket }: InviteModalProps) => {
-  const { user, isLoaded } = useUser();
-  const username = user?.username;
+// const InvitationModal = ({ closeModal, host, socket }: InviteModalProps) => {
+//   const { user, isLoaded } = useUser();
+//   const username = user?.username;
 
-  function handleAccept() {
-    console.log(host);
-    socket?.emit("JOIN_USER", {
-      username,
-      host: host?.username,
-      _id: host?._id,
-    });
-    closeModal();
-  }
+//   function handleAccept() {
+//     console.log(host);
+//     socket?.emit("JOIN_USER", {
+//       username,
+//       host: host?.username,
+//       _id: host?._id,
+//     });
+//     closeModal();
+//   }
 
-  function handleReject() {
-    closeModal();
-  }
+//   function handleReject() {
+//     closeModal();
+//   }
 
-  return (
-    <View>
-      <Pressable onPress={closeModal}>
-        <Text>Close Modal</Text>
-      </Pressable>
-      <Pressable style={{ marginTop: 40 }} onPress={handleAccept}>
-        <Text>Accept Invite</Text>
-      </Pressable>
-    </View>
-  );
-};
+//   return (
+//     <View className="relative">
+//       <View className="flex-1 h-screen bg-blue-400 px-4">
+//         <Pressable onPress={closeModal}>
+//           <Text className="text-2xl text-red-300 font-medium">Close </Text>
+//         </Pressable>
+//         <Pressable style={{ marginTop: 40 }} onPress={handleAccept}>
+//           <Text>Accept Invite</Text>
+//         </Pressable>
+//       </View>
+//     </View>
+//   );
+// };
 
 export const SocketContext = createContext<IsocketProps>({
   socket: null,

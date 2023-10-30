@@ -19,16 +19,13 @@ const Choice = ({
   revealed,
 }: Props) => {
   return (
-    <View style={button}>
+    <View className="border border-black bg-white py-2 flex flex-row justify-center rounded-lg">
       <Pressable
-        // className={`w-full rounded-xl border px-4 py-2 ${
-        //   statusEffects && "bg-black text-black"
-        // }`}
         onPress={() => {
           func();
         }}
       >
-        <Text>{text}</Text>
+        <Text className="text-lg font-medium">{text}</Text>
       </Pressable>
     </View>
   );

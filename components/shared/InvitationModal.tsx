@@ -1,6 +1,7 @@
 import { useUser } from "@clerk/clerk-expo";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSocketcontext } from "../../hooks/useSocketContext";
+import { Modal } from "react-native";
 
 export type host = {
   username: string;
@@ -29,19 +30,50 @@ const InvitationModal = ({ closeModal, host }: InviteModalProps) => {
     closeModal();
   }
 
+  // TODO ADD REJECT FUNCTION
   function handleReject() {
     closeModal();
   }
 
   return (
-    <View style={styles.container}>
-      <Pressable onPress={closeModal}>
-        <Text>Close Modal</Text>
-      </Pressable>
-      <Pressable style={{ marginTop: 40 }} onPress={handleAccept}>
-        <Text>Accept Invite</Text>
-      </Pressable>
-    </View>
+    <Modal transparent className="">
+      <View className="flex-1 bg-black/70 flex py-40 px-2 ">
+        <View className="bg-white px-2 py-6 rounded-xl ">
+          <Text className="text-2xl text-center font-semibold">Invitation</Text>
+          <View className="py-4">
+            <Text className="text-lg text-center font-medium">
+              You have been invited to join a game accept or reject by clicking
+              an option
+            </Text>
+          </View>
+
+          <View className="py-2">
+            <Text className="text-lg text-center">
+              Category: General Knowledge
+            </Text>
+          </View>
+          <View className="py-2">
+            <Text className="text-lg text-center">Host: {host?.username}</Text>
+          </View>
+          <View className="flex flex-row justify-between items-center pt-4">
+            <Pressable
+              className="px-4 py-2 border rounded-lg"
+              onPress={closeModal}
+            >
+              <Text className="text-lg text-red-600 ">Reject </Text>
+            </Pressable>
+            <Pressable
+              className="px-4 py-2 border rounded-lg"
+              onPress={handleAccept}
+            >
+              <Text className="text-lg text-green-600">Accept </Text>
+            </Pressable>
+          </View>
+
+          <Text className=" text-center">Report this user</Text>
+        </View>
+      </View>
+    </Modal>
   );
 };
 

@@ -2,8 +2,6 @@ import { Pressable, View, Text, StyleSheet } from "react-native";
 import { TstatusTypes } from "./ChoiceList";
 import { button, buttonText } from "../../../styles/primary";
 import useSound from "../../../hooks/useSound";
-import wrongChoice from "../../../assets/wrongcode.mp3";
-import correctChoice from "../../../assets/coreectanswer.mp3";
 
 type Props = {
   text: string;
@@ -20,9 +18,6 @@ const Choice = ({
   correct_answer,
   revealed,
 }: Props) => {
-  const { play: wrongChoiceSound } = useSound(wrongChoice);
-  const { play: successSound } = useSound(correctChoice);
-
   return (
     <View style={button}>
       <Pressable
@@ -30,12 +25,6 @@ const Choice = ({
         //   statusEffects && "bg-black text-black"
         // }`}
         onPress={() => {
-          if (text !== correct_answer) {
-            wrongChoiceSound();
-          }
-          if (text == correct_answer) {
-            successSound();
-          }
           func();
         }}
       >

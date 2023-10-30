@@ -9,6 +9,9 @@ import { useNavigation } from "@react-navigation/native";
 import { Loader } from "../../components";
 import CharacterSelect from "../characterselect/CharacterSelect";
 import SinglePlayerLevel from "./components/SinglplayerLevel";
+import useSound from "../../hooks/useSound";
+import wrongChoice from "../../assets/wrongcode.mp3";
+import correctChoice from "../../assets/coreectanswer.mp3";
 
 const Stack = createNativeStackNavigator();
 

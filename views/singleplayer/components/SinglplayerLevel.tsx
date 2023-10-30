@@ -25,6 +25,9 @@ import {
 import { layout } from "../../../styles/primary";
 import { useNavigation } from "@react-navigation/native";
 import { Loader } from "../../../components";
+import useSound from "../../../hooks/useSound";
+import wrongChoice from "../../../assets/wrongcode.mp3";
+import correctChoice from "../../../assets/coreectanswer.mp3";
 
 const SinglePlayerLevel = ({ route }: any) => {
   // @ts-expect-error
@@ -37,6 +40,9 @@ const SinglePlayerLevel = ({ route }: any) => {
   const [statusEffects, setStatusEffects] = useState<TstatusTypes>();
 
   const { socket } = useSocketcontext();
+
+  const { play: wrongChoiceSound } = useSound(wrongChoice);
+  const { play: successSound } = useSound(correctChoice);
 
   const { category, isGuest } = route.params;
 
@@ -236,6 +242,7 @@ const SinglePlayerLevel = ({ route }: any) => {
   const handleAnswer = (choice: string) => {
     if (choice != correct_answer) {
       decreaseLives();
+      wrongChoiceSound();
       return socket?.emit("SELECTED_OPTION_SINGLE", {
         choice: choice,
         level,
@@ -249,6 +256,7 @@ const SinglePlayerLevel = ({ route }: any) => {
     if (choice == correct_answer) {
       // *SEND EVENT AND SCORES TO SERVER
       increasePoints();
+      successSound();
       return socket?.emit("SELECTED_OPTION_SINGLE", {
         choice: choice,
         level,

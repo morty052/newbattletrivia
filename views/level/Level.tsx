@@ -27,10 +27,41 @@ import useSound from "../../hooks/useSound";
 import wrongChoice from "../../assets/wrongcode.mp3";
 import correctChoice from "../../assets/coreectanswer.mp3";
 
+// import { FaStar } from "react-icons/fa";
+
+// TODO: HANDLE PLAYER DAMAGE AND DEATH
+
+function AnswerScreen({
+  correct,
+  correct_answer,
+}: {
+  correct: boolean;
+  correct_answer: string;
+}) {
+  return (
+    <>
+      {correct && (
+        <View style={layout}>
+          <Text>Correct!</Text>
+          <Text>{correct_answer}</Text>
+        </View>
+      )}
+      {!correct && (
+        <View style={layout}>
+          <Text>Too slow!</Text>
+          <Text>{correct_answer}</Text>
+        </View>
+      )}
+    </>
+  );
+}
+
 const Level = ({ route }) => {
   const [GameState, GameDispatch] = useReducer(Levelreducer, LevelState);
   const [confused, setconfused] = useState(false);
   const [loading, setloading] = useState(false);
+  const [answered, setanswered] = useState(false);
+  const [correct, setcorrect] = useState(false);
   const [statusEffects, setStatusEffects] = useState<TstatusTypes>();
 
   const { socket } = useSocketcontext();
@@ -126,15 +157,42 @@ const Level = ({ route }) => {
     // }
 
     socket?.on("RESPONSE_RECEIVED", (res) => {
-      // @ts-expect-error
-      GameDispatch({
-        type: "PROGRESS_LEVEL",
-        payload: {
-          tally: res,
-        },
-      });
+      const { scores, quickest } = res;
 
-      setloading(false);
+      if (username == quickest) {
+        console.log("this na fastest finger", username);
+        setTimeout(() => {
+          setanswered(false);
+          GameDispatch({
+            type: "PROGRESS_LEVEL",
+            payload: {
+              tally: scores,
+            },
+          });
+        }, 1000);
+      }
+
+      if (username != quickest) {
+        setcorrect(false);
+        setanswered(true);
+        setTimeout(() => {
+          setanswered(false);
+          GameDispatch({
+            type: "PROGRESS_LEVEL",
+            payload: {
+              tally: scores,
+            },
+          });
+        }, 1000);
+      }
+
+      // @ts-expect-error
+      // GameDispatch({
+      //   type: "PROGRESS_LEVEL",
+      //   payload: {
+      //     tally: scores,
+      //   },
+      // });
     });
 
     socket?.on("PLAYER_DEATH", (res) => {
@@ -227,7 +285,7 @@ const Level = ({ route }) => {
 
   // * HANDLE QUESTIONS END
   useEffect(() => {
-    if (level == 2) {
+    if (level == 20) {
       console.log("ending  game", level);
       socket?.emit("TALLY_GAME", { room_id, scoreBoard }, (res: any) => {
         // @ts-expect-error
@@ -288,8 +346,9 @@ const Level = ({ route }) => {
 
   // * SEND ANSWERS TO SERVER REALTIME
   const handleAnswer = (choice: string) => {
-    setloading(true);
     if (choice != correct_answer) {
+      setcorrect(false);
+      setanswered(true);
       decreaseLives();
       wrongChoiceSound();
       return socket?.emit("SELECTED_OPTION", {
@@ -306,6 +365,8 @@ const Level = ({ route }) => {
 
     // * ONLY INCREASE POINTS IF USER CHOICE IS CORRECT ANSWER
     if (choice == correct_answer) {
+      setcorrect(true);
+      setanswered(true);
       successSound();
       const newscores = increasePoints();
 
@@ -361,7 +422,7 @@ const Level = ({ route }) => {
       {/* <View className="py-8">
         <Button title="Go Back" onPress={() => navigation.goBack()} />
       </View> */}
-      {!ended && (
+      {!ended && !answered && (
         <View className="h-screen flex-1">
           {lives && lives > 0 ? (
             <View className=" flex-1 h-screen bg-gray-400 px-2 pt-14 ios:pt-20">
@@ -389,6 +450,10 @@ const Level = ({ route }) => {
       )}
 
       {ended && <WinnerScreen username={username} scoreBoard={scoreBoard} />}
+
+      {answered && (
+        <AnswerScreen correct_answer={correct_answer} correct={correct} />
+      )}
     </>
   );
 };
