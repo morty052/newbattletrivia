@@ -280,7 +280,7 @@ const SinglePlayerLevel = ({ route }: any) => {
       {!ended && (
         <View className="h-screen flex-1">
           {lives && lives > 0 ? (
-            <View className=" flex-1 h-screen bg-gray-400 px-2 pt-14 ios:pt-20">
+            <View className=" flex-1 h-screen bg-blue-400 px-2 pt-14 ios:pt-20">
               <StandardView
                 CurrentPlayer={CurrentPlayer}
                 OtherPlayers={OtherPlayers}
