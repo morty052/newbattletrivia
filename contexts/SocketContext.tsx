@@ -85,7 +85,7 @@ export const SocketContextProvider = ({
 
   // const socket = useSocket("https://snapdragon-cerulean-pulsar.glitch.me/",{
   const socket = useSocket(
-    "https://snapdragon-cerulean-pulsar.glitch.me/user",
+    "https://near-goat-82.deno.dev",
     // "http://localhost:5000/user",
     {
       reconnectionAttempts: 5,

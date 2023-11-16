@@ -1,13 +1,14 @@
 import { View, Text } from "react-native";
 import React from "react";
+import { Screen } from "../../components";
 
 type Props = {};
 
 const HomeScreen = (props: Props) => {
   return (
-    <View>
-      <Text>HomeScreen</Text>
-    </View>
+    <Screen>
+      <Text>Hot module Reloaded please</Text>
+    </Screen>
   );
 };
 
