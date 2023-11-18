@@ -12,6 +12,8 @@ import { default as Roadmap } from "./roadmap/Roadmap";
 // import Events
 import { default as Events } from "./events/Events";
 
+import Level from "./level/Level";
+
 export {
   SignIn,
   Menu,
@@ -25,4 +27,5 @@ export {
   SinglePlayer,
   Roadmap,
   Events,
+  Level,
 };

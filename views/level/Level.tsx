@@ -1,445 +1,283 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react/prop-types */
-
-import { useEffect, useReducer, useState } from "react";
-// import { FaStar } from "react-icons/fa";
-import { useSocketcontext } from "../../hooks/useSocketContext";
-// import { useParams } from "react-router-dom";
-import { max } from "lodash";
-import { StandardView, GameOverScreen, WinnerScreen } from "./components";
-import { SetPlayers } from "./features";
-import Levelreducer, { LevelState } from "../../reducers/LevelReducer";
-import { player } from "../../types";
-import { character } from "../../types";
-import { useUser } from "@clerk/clerk-react";
-import { TstatusTypes } from "./components/ChoiceList";
+import React, { useEffect, useState } from "react";
 import {
-  Button,
-  Pressable,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
-import { layout } from "../../styles/primary";
+  AnswerView,
+  HUD,
+  LetterPicker,
+  OptionPicker,
+  WaitScreen,
+} from "./components";
+import { View, Button, Text, Pressable } from "react-native";
+import { useSocketcontext } from "../../hooks/useSocketContext";
+import { Loader, Screen } from "../../components";
+import { Audio } from "expo-av";
+import * as FileSystem from "expo-file-system";
+import { initLevel } from "./features/initLevel";
 import { useNavigation } from "@react-navigation/native";
-import { Loader } from "../../components";
-import useSound from "../../hooks/useSound";
-import wrongChoice from "../../assets/wrongcode.mp3";
-import correctChoice from "../../assets/coreectanswer.mp3";
 
-// import { FaStar } from "react-icons/fa";
+type Props = {};
 
-// TODO: HANDLE PLAYER DAMAGE AND DEATH
+async function checkAnimal(animal: string) {
+  try {
+    const url = `https://near-goat-82.deno.dev/ai/checkanimal?animal=${animal}`;
+    // "http://localhost:3000/ai/checkanimal?animal=vampire squid";
+    const res = await fetch(url, {
+      method: "GET",
+    });
+    const data = await res.json();
+    console.log(data);
+    return res;
+  } catch (error) {
+    console.log(error);
+  }
+}
 
-function AnswerScreen({
-  correct,
-  correct_answer,
-}: {
-  correct: boolean;
-  correct_answer: string;
-}) {
+function RecordingScreen() {
+  const [speaking, setSpeaking] = useState(false);
+  const [recording, setRecording] = useState<null | Audio.Recording>(null);
+  const [sound, setSound] = useState(null);
+
+  const { socket } = useSocketcontext();
+
+  async function uploadSoundToServer(soundFile) {
+    const formData = new FormData();
+
+    try {
+      const response = await FileSystem.uploadAsync(
+        `http://192.168.100.16:3000/ai/speechtotext`,
+        soundFile,
+        {
+          fieldName: "file",
+          httpMethod: "POST",
+          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+      console.log(JSON.stringify(response, null, 4));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function startRecording() {
+    try {
+      console.log("Requesting permissions..");
+      await Audio.requestPermissionsAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      console.log("Starting recording..");
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      setRecording(recording);
+      console.log("Recording started");
+    } catch (err) {
+      console.error("Failed to start recording", err);
+    }
+  }
+
+  async function stopRecording() {
+    console.log("Stopping recording..");
+    const uri = recording?.getURI();
+    await recording?.stopAndUnloadAsync();
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+    });
+
+    console.log("Recording stopped and stored at", uri);
+    setRecording(uri);
+    await uploadSoundToServer(uri);
+  }
+
+  async function playSound() {
+    console.log("Loading Sound", recording);
+    const { sound } = await Audio.Sound.createAsync({ uri: recording });
+    setSound(sound);
+    console.log("Playing Sound");
+    await sound.playAsync();
+  }
+
+  useEffect(() => {
+    return sound
+      ? () => {
+          console.log("Unloading Sound");
+          sound.unloadAsync();
+        }
+      : undefined;
+  }, [sound]);
+
+  async function handleStartRecording() {
+    console.info("starting recording");
+    setSpeaking(true);
+    await startRecording();
+  }
+
+  async function handleEndRecording() {
+    console.info("ending recording");
+    setSpeaking(false);
+    await stopRecording();
+  }
+
   return (
     <>
-      {correct && (
-        <View style={layout}>
-          <Text>Correct!</Text>
-          <Text>{correct_answer}</Text>
+      <Screen>
+        <View className="flex space-y-8 ">
+          <Text>Recording Screen</Text>
+
+          <Pressable
+            onPress={playSound}
+            className={`p-4 border ${
+              !speaking ? "border-white" : " border-red-500"
+            }`}
+          >
+            <Text>Play</Text>
+          </Pressable>
+          <Pressable
+            onPressOut={handleEndRecording}
+            onPressIn={handleStartRecording}
+            className={`p-4 border ${
+              !speaking ? "border-white" : " border-red-500"
+            }`}
+          >
+            <Text>Press Me</Text>
+          </Pressable>
         </View>
-      )}
-      {!correct && (
-        <View style={layout}>
-          <Text>Too slow!</Text>
-          <Text>{correct_answer}</Text>
-        </View>
-      )}
+      </Screen>
     </>
   );
 }
 
 const Level = ({ route }) => {
-  const [GameState, GameDispatch] = useReducer(Levelreducer, LevelState);
-  const [confused, setconfused] = useState(false);
-  const [loading, setloading] = useState(false);
-  const [answered, setanswered] = useState(false);
-  const [correct, setcorrect] = useState(false);
-  const [statusEffects, setStatusEffects] = useState<TstatusTypes>();
+  const [open, setOpen] = useState(false);
+  const [index, setIndex] = useState(0);
+  const [finished, setFinished] = useState(false);
+  const [activeLetter, setActiveLetter] = useState("B");
+  const [selectingLetter, setSelectingLetter] = useState(true);
+  const [currentTurn, setCurrentTurn] = useState(1);
+  const [players, setPlayers] = useState([]);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [playing, setPlaying] = useState(true);
+  const [contesting, setContesting] = useState(false);
 
   const { socket } = useSocketcontext();
 
-  const { play: wrongChoiceSound } = useSound(wrongChoice);
-  const { play: successSound } = useSound(correctChoice);
-
-  const {
-    room_id,
-    category,
-    public: isPublic,
-    seeker_id,
-    match_id,
-  } = route.params;
-
-  const navigation = useNavigation();
-
-  // TODO:CHANGE LOCATION OF USERNAME
-  // const username = localStorage.getItem("username");
-  const { user, isLoaded } = useUser();
-
-  const username = user?.username;
-
-  const {
-    ended,
-    questions,
-    level,
-    CurrentPlayer,
-    OtherPlayers,
-    allPlayers,
-    scoreBoard,
-    winner,
-  } = GameState;
-
-  // !ORIGINAL FUNCTION
-  const { question, correct_answer, incorrect_answers } =
-    questions.length > 1 && level != questions.length ? questions[level] : [];
-
-  // ?TESTING NEW OBJECT DESTRUCTURING
-  // const { question, correct_answer, incorrect_answers } =
-  //   questions.length > 1 ? CurrentPlayer.questions[level] : [];
-
-  //* destructure and rename username and points variable from winner object from state.
-
-  const { points: winningPoints, username: winnerName } = winner;
-  // const { username: winnerName } = winningController ? winningController : [];
-
-  const { lives } = CurrentPlayer as player;
-
-  // * HANDLE PLAYER DAMAGE AND DEATH
-  const decreaseLives = () => {
-    const { lives } = CurrentPlayer;
-
-    if (lives == 1) {
-      console.log("player about to die now");
-      socket?.emit("PLAYER_DEATH", {
-        username: CurrentPlayer.username,
-        room_id,
-      });
-    }
-
-    CurrentPlayer.takeDamage();
+  const { room_id, public: isPublic } = route.params;
+  const handleFinish = () => {
+    socket?.emit("END_ROUND", {
+      room_id,
+      currentTurn,
+      maxTurns: players.length,
+    });
   };
 
-  const increasePoints = () => {
-    CurrentPlayer.increasePoints();
-    const newscores = scoreBoard.map((player: player) => {
-      const { points } = player;
+  /**
+   * handles the selection of a letter.
+   * sends the letter to the server
+   * @param {string} letter - The letter to be selected.
+   */
 
-      if (player.username == username) {
-        return {
-          ...player,
-          //  @ts-ignore
-          points: points + 10,
-        };
-      }
-
-      return player;
+  const handleLetterSelect = (letter: string) => {
+    socket?.emit("SET_LETTER", { letter, room_id }, (letter: string) => {
+      console.log("Sent LETTER > ", letter);
     });
-
-    return newscores;
   };
 
-  // const handleDebuff = (res) => {
-  //   CurrentPlayer.Debuff(res);
-  // };
-
-  // * HANDLE PLAYER DEATH AND RESPONSE
-  // * HANDLE EVENT FIRED AFTER USER PICKS AN ANSWER
-  useEffect(() => {
-    // if (!CurrentPlayer) {
-    //   return;
-    // }
-
-    socket?.on("RESPONSE_RECEIVED", (res) => {
-      const { scores, quickest } = res;
-
-      if (username == quickest) {
-        console.log("this na fastest finger", username);
-        setTimeout(() => {
-          setanswered(false);
-          GameDispatch({
-            type: "PROGRESS_LEVEL",
-            payload: {
-              tally: scores,
-            },
-          });
-        }, 1000);
-      }
-
-      if (username != quickest) {
-        setcorrect(false);
-        setanswered(true);
-        setTimeout(() => {
-          setanswered(false);
-          GameDispatch({
-            type: "PROGRESS_LEVEL",
-            payload: {
-              tally: scores,
-            },
-          });
-        }, 1000);
-      }
-
-      // @ts-expect-error
-      // GameDispatch({
-      //   type: "PROGRESS_LEVEL",
-      //   payload: {
-      //     tally: scores,
-      //   },
-      // });
-    });
-
-    socket?.on("PLAYER_DEATH", (res) => {
-      console.log("Player Died");
-      // @ts-expect-error
-      GameDispatch({ type: "PLAYER_DEATH", payload: { name: res } });
-      console.log("reduced players");
-    });
-
-    socket?.on("POWER_USED", (res: character) => {
-      console.log("power used");
-      const { name } = res;
-
-      // switch (name) {
-      //   case "Arhuanran":
-      //     CurrentPlayer.Debuff("crushed");
-      //     break;
-      //   case "Athena":
-      //     CurrentPlayer.Debuff();
-      //     break;
-      //   case "Da Vinci":
-      //     CurrentPlayer.Debuff();
-      //     break;
-      //   case "Ife":
-      //     CurrentPlayer.Debuff("confused");
-      //     break;
-      //   case "Washington":
-      //     CurrentPlayer.Debuff();
-      //     break;
-      //   case "Confucious":
-      //     CurrentPlayer.Debuff();
-      //     break;
-
-      //   default:
-      //     break;
-      // }
-    });
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket]);
-
-  // * SET QUESTIONS AND PLAYER OBJECTS
-  useEffect(() => {
-    // fetchQuestions()
-
-    if (!username) {
+  const handleTurn = (turn: number) => {
+    if (turn > 2) {
+      setCurrentTurn(1);
       return;
     }
-
-    socket?.emit(
-      "SET_ROOM",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      { room_id, username, category, isPublic, seeker_id, match_id },
-      (res: {
-        CurrentPlayer: player;
-        OtherPlayers: character[];
-        questions: string[];
-        scores: [];
-      }) => {
-        const { CurrentPlayer, OtherPlayers, questions, scores } = res;
-
-        const { player, enemies } = SetPlayers(
-          CurrentPlayer,
-          // @ts-expect-error
-          OtherPlayers as player[]
-        );
-
-        // @ts-expect-error
-
-        GameDispatch({
-          type: "START_GAME",
-          payload: {
-            CurrentPlayer: player,
-            OtherPlayers: enemies,
-            questions,
-            scores,
-          },
-        });
-      }
-    );
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username]);
-
-  // * HANDLE QUESTIONS END
-  useEffect(() => {
-    if (level == 20) {
-      console.log("ending  game", level);
-      socket?.emit("TALLY_GAME", { room_id, scoreBoard }, (res: any) => {
-        // @ts-expect-error
-        const points = Array.from(res, (p) => p.points);
-        const highest = max(points);
-
-        // @ts-expect-error
-        const winner = res.find((p) => p.points == highest);
-
-        // @ts-expect-error
-        GameDispatch({
-          type: "END_GAME",
-          payload: {
-            scores: res,
-            winner,
-          },
-        });
-
-        console.log("this is final tally", res);
-      });
-    }
-  }, [level]);
-
-  // * HANDLE LAST PLAYER STANDING
-  useEffect(() => {
-    if (allPlayers.length == 1) {
-      socket?.emit("TALLY_GAME", { room_id, scoreBoard }, (res: any) => {
-        const points = Array.from(scoreBoard, (p: player) => p.points);
-        const highest = points.reduce((acc, curr) => Math.max(acc, curr), 0);
-
-        // const winner = scoreBoard.find((p: player) => p.points == highest);
-        // TODO IMPLEMEMT WINNER
-        const winner = {
-          points: 12,
-          username: "winner",
-        };
-
-        // @ts-expect-error
-        GameDispatch({
-          type: "END_GAME",
-          payload: {
-            scores: res,
-            winner,
-          },
-        });
-      });
-    }
-  }, [socket, allPlayers]);
-
-  if (questions.length < 1 || !CurrentPlayer || !isLoaded) {
-    return (
-      <View style={layout}>
-        <Button title="Go Back" onPress={() => navigation.goBack()} />
-        <Text>....loading</Text>
-      </View>
-    );
-  }
-
-  // * SEND ANSWERS TO SERVER REALTIME
-  const handleAnswer = (choice: string) => {
-    if (choice != correct_answer) {
-      setcorrect(false);
-      setanswered(true);
-      decreaseLives();
-      wrongChoiceSound();
-      return socket?.emit("SELECTED_OPTION", {
-        choice: choice,
-        room_id,
-        level,
-        username,
-        CurrentPlayer,
-        correct: false,
-        isPublic,
-        scores: scoreBoard,
-      });
-    }
-
-    // * ONLY INCREASE POINTS IF USER CHOICE IS CORRECT ANSWER
-    if (choice == correct_answer) {
-      setcorrect(true);
-      setanswered(true);
-      successSound();
-      const newscores = increasePoints();
-
-      // *SEND EVENT AND SCORES TO SERVER
-      return socket?.emit("SELECTED_OPTION", {
-        choice: choice,
-        room_id,
-        level,
-        username,
-        CurrentPlayer,
-        correct: true,
-        isPublic,
-        scores: newscores,
-      });
-    }
-
-    // socket?.emit("SELECTED_OPTION", {
-    //   choice: choice,
-    //   room_id,
-    //   level,
-    //   username,
-    //   CurrentPlayer,
-    // });
+    setCurrentTurn(turn);
   };
 
-  const { correct_answer: nextQuestion } =
-    level + 1 < questions.length ? questions[level + 1] : [];
-  const { correct_answer: thirdQuestion } =
-    level + 2 < questions.length ? questions[level + 2] : [];
-
-  const PowerParams = {
-    answer: correct_answer,
-    nextQuestion,
-    thirdQuestion,
-    socket,
-    roomID: room_id,
-    // @ts-expect-error
-    func: (f) => console.log(f),
+  /**
+   * Initializes the level by fetching players, max turns, and the current turn ID from the server.
+   *
+   * @param {string} room_id - The ID of the room.
+   * @return {Promise<void>} A promise that resolves when the initialization is complete.
+   */
+  const handleInit = async () => {
+    const { players, maxTurns, turn_id } = await initLevel(room_id);
+    setPlayers(players);
+    setUserId(turn_id);
   };
 
-  // * SHOW  LOADER
-  if (loading) {
+  /*
+   * useEffect hook that initializes the level when the component mounts.
+   */
+  useEffect(() => {
+    handleInit();
+  }, []);
+
+  useEffect(() => {
+    socket?.on("SWITCH_TURN", (data: any) => {
+      const { turn } = data;
+      handleTurn(turn);
+      setFinished(false);
+      setSelectingLetter(true);
+    });
+
+    socket?.on("SWITCH_LETTER", (data: any) => {
+      const { letter } = data;
+      setActiveLetter(letter);
+      setFinished(false);
+      setSelectingLetter(false);
+    });
+
+    socket?.on("ROUND_ENDED", (data: any) => {
+      const { turn } = data;
+      setCurrentTurn(turn);
+      setFinished(true);
+      setSelectingLetter(true);
+    });
+  }, [socket]);
+
+  const indexColor: any = {
+    0: "bg-sky-400",
+    1: "bg-green-400",
+    2: "bg-blue-400",
+    3: "bg-purple-400",
+  };
+
+  if (players.length < 1) {
     return <Loader />;
   }
 
+  // const navigation = useNavigation();
+
   return (
     <>
-      {/* <View className="py-8">
-        <Button title="Go Back" onPress={() => navigation.goBack()} />
-      </View> */}
-      {!ended && !answered && (
-        <View className="h-screen flex-1">
-          {lives && lives > 0 ? (
-            <View className=" flex-1 h-screen bg-gray-400 px-2 pt-14 ios:pt-20">
-              <StandardView
-                CurrentPlayer={CurrentPlayer}
-                OtherPlayers={OtherPlayers}
-                choices={incorrect_answers}
-                question={question}
-                correct_answer={correct_answer}
-                handleAnswer={handleAnswer}
-                setStatusEffects={setStatusEffects}
-                statusEffects={statusEffects}
-                room_id={room_id as string}
-                level={level}
-                scoreBoard={scoreBoard}
-              />
-            </View>
-          ) : (
-            <GameOverScreen />
-          )}
-        </View>
-      )}
-
-      {ended && <WinnerScreen username={username} scoreBoard={scoreBoard} />}
-
-      {answered && (
-        <AnswerScreen correct_answer={correct_answer} correct={correct} />
-      )}
+      <View
+        className={`flex-1 flex   pt-8 px-2 relative transition-all duration-200 ease-in  ${indexColor[index]}`}
+      >
+        <HUD turnId={currentTurn} activeLetter={activeLetter} />
+        {/* <View className="pt-12">
+          <Button
+            title="socket"
+            onPress={() => checkAnimal("tarantula")}
+          ></Button>
+        </View> */}
+        {!selectingLetter && !finished && (
+          <AnswerView
+            handleFinish={handleFinish}
+            index={index}
+            setIndex={setIndex}
+          />
+        )}
+        <WaitScreen
+          handleLetterSelect={(letter: string) => handleLetterSelect(letter)}
+          userId={userId}
+          turnId={currentTurn}
+          selectingLetter={selectingLetter}
+        />
+        <OptionPicker setIndex={setIndex} open={open} setOpen={setOpen} />
+        <LetterPicker open={open} setOpen={setOpen} />
+      </View>
     </>
   );
 };

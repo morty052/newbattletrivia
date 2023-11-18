@@ -7,7 +7,6 @@ import background from "../../assets/background.jpeg";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import {
   BottomNav,
-  TopicScreen,
   Button,
   Inventory,
   Header,
@@ -259,11 +258,11 @@ function Menu() {
         name="Lobby"
         component={Lobby}
       />
-      <Stack.Screen
+      {/* <Stack.Screen
         options={{ headerShown: false }}
         name="Category"
         component={TopicScreen}
-      />
+      /> */}
       <Stack.Screen
         options={{ headerShown: false }}
         name="Publicmatch"

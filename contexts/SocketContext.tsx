@@ -11,9 +11,10 @@ import SocketReducer, { defaultContextState } from "../reducers/SocketReducer";
 import { Socket } from "socket.io-client";
 import { Modal, Pressable, Text, View } from "react-native";
 import { useUser } from "@clerk/clerk-expo";
-import InvitationModal from "../components/shared/InvitationModal";
+// import InvitationModal from "../components/shared/InvitationModal";
 // import { host } from "../components/shared/InvitationModal";
 import { useNavigation } from "@react-navigation/native";
+import { checkForKey } from "../lib/secure-store";
 
 interface IsocketProps {
   socket: Socket | null;
@@ -34,37 +35,37 @@ type InviteModalProps = {
   socket: Socket;
 };
 
-// const InvitationModal = ({ closeModal, host, socket }: InviteModalProps) => {
-//   const { user, isLoaded } = useUser();
-//   const username = user?.username;
+const InvitationModal = ({ closeModal, host, socket }: InviteModalProps) => {
+  const { user, isLoaded } = useUser();
+  const username = user?.username;
 
-//   function handleAccept() {
-//     console.log(host);
-//     socket?.emit("JOIN_USER", {
-//       username,
-//       host: host?.username,
-//       _id: host?._id,
-//     });
-//     closeModal();
-//   }
+  function handleAccept() {
+    console.log(host);
+    socket?.emit("JOIN_USER", {
+      username,
+      host: host?.username,
+      _id: host?._id,
+    });
+    closeModal();
+  }
 
-//   function handleReject() {
-//     closeModal();
-//   }
+  function handleReject() {
+    closeModal();
+  }
 
-//   return (
-//     <View className="relative">
-//       <View className="flex-1 h-screen bg-blue-400 px-4">
-//         <Pressable onPress={closeModal}>
-//           <Text className="text-2xl text-red-300 font-medium">Close </Text>
-//         </Pressable>
-//         <Pressable style={{ marginTop: 40 }} onPress={handleAccept}>
-//           <Text>Accept Invite</Text>
-//         </Pressable>
-//       </View>
-//     </View>
-//   );
-// };
+  return (
+    <View className="relative">
+      <View className="flex-1 h-screen bg-blue-400 px-4">
+        <Pressable onPress={closeModal}>
+          <Text className="text-2xl text-red-300 font-medium">Close </Text>
+        </Pressable>
+        <Pressable style={{ marginTop: 40 }} onPress={handleAccept}>
+          <Text>Accept Invite</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+};
 
 export const SocketContext = createContext<IsocketProps>({
   socket: null,
@@ -81,12 +82,11 @@ export const SocketContextProvider = ({
   const [inviteReceived, setinviteReceived] = useState(false);
   const [host, sethost] = useState<host>();
   const [_id, set_id] = useState<string | null>(null);
-  const [popUpOpen, setpopUpOpen] = useState(false);
 
   // const socket = useSocket("https://snapdragon-cerulean-pulsar.glitch.me/",{
   const socket = useSocket(
-    "https://near-goat-82.deno.dev",
-    // "http://localhost:5000/user",
+    // "https://napt-server.onrender.com/user",
+    "http://192.168.100.16:3000/user",
     {
       reconnectionAttempts: 5,
       reconnectionDelay: 5000,
@@ -123,18 +123,25 @@ export const SocketContextProvider = ({
 
   const { isSignedIn, user } = useUser();
 
-  const { username } = user || {};
-
   const navigation = useNavigation();
 
-  const SendHandShake = () => {
-    if (!isSignedIn) {
-      socket.emit("handshake", { isGuest: true });
+  const SendHandShake = async () => {
+    const { _id, username } = (await checkForKey()) ?? {};
+    if (_id) {
+      socket.emit("handshake", { username });
+      console.info("handshake sent", username);
       setloading(false);
-      return;
+    } else {
+      socket.emit("isGuest");
+      setloading(false);
     }
-    socket.emit("handshake", { username });
-    setloading(false);
+  };
+
+  const getUser = async () => {
+    const { _id, username } = (await checkForKey()) ?? {};
+    if (_id) {
+      null;
+    }
   };
 
   const [loading, setloading] = useState(true);

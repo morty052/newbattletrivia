@@ -7,9 +7,7 @@ export const defaultContextState = {
 };
 
 const SocketReducer = (state, action) => {
-  console.info(
-    `Message Received - Action : ${action} payload: ${action.payload}`
-  );
+  console.info(`socket open`);
 
   switch (action.type) {
     case "update_socket":

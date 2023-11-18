@@ -4,6 +4,7 @@ import { useSocketcontext } from "../../hooks/useSocketContext";
 import { useUser } from "@clerk/clerk-expo";
 import { Loader } from "../../components";
 import { useEffect, useState } from "react";
+import { checkForKey } from "../../lib/secure-store";
 
 function PublicMatch({ route }) {
   const [match, setmatch] = useState<null | string>("");
@@ -28,30 +29,16 @@ function PublicMatch({ route }) {
 
   const { room_id } = route.params;
 
-  useEffect(() => {
-    if (!isLoaded) {
-      return;
-    }
-
+  async function handleMatchMaking() {
+    const { username } = (await checkForKey()) ?? {};
+    console.log(username);
     socket?.emit("MATCH_MAKING", { room_id, username }, (res: any) => {
-      console.log(res);
-      // const { match, seeker_id, match_id, room_id, category } = res;
-      // navigation.navigate("Level", {
-      //   room_id,
-      //   seeker_id,
-      //   match_id,
-      //   category,
-      //   public: true,
-      // });
-
       setmatchmaking(true);
     });
-  }, [socket, isLoaded]);
+  }
 
-  useEffect(() => {
-    if (!matchmaking) {
-      return;
-    }
+  async function handleFindMatch() {
+    const { username } = (await checkForKey()) ?? {};
 
     socket?.emit(
       "FIND_MATCH",
@@ -68,6 +55,18 @@ function PublicMatch({ route }) {
         handleMatch(res);
       }
     );
+  }
+
+  useEffect(() => {
+    handleMatchMaking();
+  }, [socket]);
+
+  useEffect(() => {
+    if (!matchmaking) {
+      return;
+    }
+
+    handleFindMatch();
   }, [matchmaking, socket]);
 
   useEffect(() => {
@@ -105,15 +104,6 @@ function PublicMatch({ route }) {
         // settest_id(room_id);
       }
     );
-
-    socket?.on("PUBLIC_ROOM", (res) => {
-      console.log(`${username} got it too`);
-    });
-
-    // return () => {
-    //   socket?.off("JOINED_PUBLIC_ROOM");
-    //   socket?.off("PUBLIC_ROOM");
-    // };
   }, [socket]);
 
   type ThandleMatchParams = {
@@ -126,7 +116,8 @@ function PublicMatch({ route }) {
     username?: string | null | undefined;
   };
 
-  const handleMatch = (params: ThandleMatchParams) => {
+  const handleMatch = async (params: ThandleMatchParams) => {
+    const { username } = (await checkForKey()) ?? {};
     const { match, message, room_id, category, seeker_id, match_id } = params;
     setmatch(match);
 
@@ -145,14 +136,14 @@ function PublicMatch({ route }) {
 
   const handleAccept = () => {
     setacceptModalOpen(false);
-    console.log(matchParams);
+    console.info("this is match params", matchParams);
     socket?.emit("ACCEPT_MATCH", { ...matchParams }, (res: any) => {
       const { room_id, category, seeker_id, match_id } = res;
-      console.log(res);
+      console.log("this is res", res);
     });
   };
 
-  if (!isLoaded || !room_id || !room_id) {
+  if (!matchmaking) {
     return <Loader />;
   }
 
