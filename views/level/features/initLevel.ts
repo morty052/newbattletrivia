@@ -66,5 +66,6 @@ export const initLevel = async (room_id: string) => {
     players,
     maxTurns,
     turn_id,
+    currentPlayer,
   };
 };

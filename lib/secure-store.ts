@@ -29,3 +29,8 @@ export const checkForKey = async (): Promise<{
     return null;
   }
 };
+
+export const deleteKey = async (key: string): Promise<void> => {
+  await SecureStore.deleteItemAsync(key);
+  console.info("key deleted");
+};

@@ -38,6 +38,7 @@ import PublicMatch from "../publicmatch/PublicMatch";
 import SinglePlayer from "../singleplayer/SinglePlayer";
 import Roadmap from "../roadmap/Roadmap";
 import Events from "../events/Events";
+import { RecordingScreen } from "../../components";
 
 const Stack = createNativeStackNavigator();
 const MenuStack = createNativeStackNavigator();
@@ -258,11 +259,11 @@ function Menu() {
         name="Lobby"
         component={Lobby}
       />
-      {/* <Stack.Screen
+      <Stack.Screen
         options={{ headerShown: false }}
         name="Category"
-        component={TopicScreen}
-      /> */}
+        component={RecordingScreen}
+      />
       <Stack.Screen
         options={{ headerShown: false }}
         name="Publicmatch"

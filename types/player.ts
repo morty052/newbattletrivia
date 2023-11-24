@@ -1,6 +1,8 @@
 import { Debuffs, characterName } from "@/classes/Player";
-import { character } from "@/views/gamemenu/components/CharacterSelect";
+// import { character } from "@/views/gamemenu/components/CharacterSelect";
 import { Socket } from "socket.io-client";
+
+const character = {};
 
 export type player = {
   _id?: string;
@@ -55,3 +57,22 @@ export type player = {
     socket?: string;
   };
 };
+
+export interface playerClass {
+  turn_id: number;
+  username: string;
+  status: {
+    ready: boolean;
+    connected: boolean;
+    dead: boolean;
+  };
+  choices: {
+    name: string;
+    animal: string;
+    place: string;
+    thing: string;
+  };
+  points: number;
+  populateChoices: (choices: any) => void;
+  clearChoices: () => void;
+}

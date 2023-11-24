@@ -1,13 +1,5 @@
-interface playerClass {
-  turn_id: number;
-  username: string;
-  status: {
-    ready: boolean;
-    connected: boolean;
-    dead: boolean;
-  };
-  points: number;
-}
+import { playerClass } from "../../../types/player";
+import Player from "../../../classes/Player";
 
 interface user {
   username: string;
@@ -18,20 +10,6 @@ interface user {
     dead: boolean;
   };
   points: number;
-}
-
-class Player {
-  turn_id;
-  username;
-  status;
-  points;
-  choices = [];
-  constructor({ username, turn_id, status, points }: user) {
-    this.turn_id = turn_id;
-    this.username = username;
-    this.status = status;
-    this.points = points;
-  }
 }
 
 export const setPlayer = (user: user): playerClass => {

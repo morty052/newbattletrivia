@@ -10,6 +10,9 @@ export * from "./optionpicker";
 export * from "./waitscreen";
 export * from "./hud";
 export * from "./letterpicker";
+export * from "./answerbar";
+export * from "./playerbar";
+export * from "./tallyscreen";
 
 export {
   Choice,

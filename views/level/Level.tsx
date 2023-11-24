@@ -4,6 +4,7 @@ import {
   HUD,
   LetterPicker,
   OptionPicker,
+  TallyScreen,
   WaitScreen,
 } from "./components";
 import { View, Button, Text, Pressable } from "react-native";
@@ -13,6 +14,7 @@ import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system";
 import { initLevel } from "./features/initLevel";
 import { useNavigation } from "@react-navigation/native";
+import { playerClass } from "./features/setPlayer";
 
 type Props = {};
 
@@ -31,147 +33,40 @@ async function checkAnimal(animal: string) {
   }
 }
 
-function RecordingScreen() {
-  const [speaking, setSpeaking] = useState(false);
-  const [recording, setRecording] = useState<null | Audio.Recording>(null);
-  const [sound, setSound] = useState(null);
+// TODO: REFACTOR STATES TO SINGLE OBJECT
 
-  const { socket } = useSocketcontext();
-
-  async function uploadSoundToServer(soundFile) {
-    const formData = new FormData();
-
-    try {
-      const response = await FileSystem.uploadAsync(
-        `http://192.168.100.16:3000/ai/speechtotext`,
-        soundFile,
-        {
-          fieldName: "file",
-          httpMethod: "POST",
-          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
-      console.log(JSON.stringify(response, null, 4));
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async function startRecording() {
-    try {
-      console.log("Requesting permissions..");
-      await Audio.requestPermissionsAsync();
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      console.log("Starting recording..");
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      setRecording(recording);
-      console.log("Recording started");
-    } catch (err) {
-      console.error("Failed to start recording", err);
-    }
-  }
-
-  async function stopRecording() {
-    console.log("Stopping recording..");
-    const uri = recording?.getURI();
-    await recording?.stopAndUnloadAsync();
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-    });
-
-    console.log("Recording stopped and stored at", uri);
-    setRecording(uri);
-    await uploadSoundToServer(uri);
-  }
-
-  async function playSound() {
-    console.log("Loading Sound", recording);
-    const { sound } = await Audio.Sound.createAsync({ uri: recording });
-    setSound(sound);
-    console.log("Playing Sound");
-    await sound.playAsync();
-  }
-
-  useEffect(() => {
-    return sound
-      ? () => {
-          console.log("Unloading Sound");
-          sound.unloadAsync();
-        }
-      : undefined;
-  }, [sound]);
-
-  async function handleStartRecording() {
-    console.info("starting recording");
-    setSpeaking(true);
-    await startRecording();
-  }
-
-  async function handleEndRecording() {
-    console.info("ending recording");
-    setSpeaking(false);
-    await stopRecording();
-  }
-
-  return (
-    <>
-      <Screen>
-        <View className="flex space-y-8 ">
-          <Text>Recording Screen</Text>
-
-          <Pressable
-            onPress={playSound}
-            className={`p-4 border ${
-              !speaking ? "border-white" : " border-red-500"
-            }`}
-          >
-            <Text>Play</Text>
-          </Pressable>
-          <Pressable
-            onPressOut={handleEndRecording}
-            onPressIn={handleStartRecording}
-            className={`p-4 border ${
-              !speaking ? "border-white" : " border-red-500"
-            }`}
-          >
-            <Text>Press Me</Text>
-          </Pressable>
-        </View>
-      </Screen>
-    </>
-  );
-}
-
-const Level = ({ route }) => {
+const Level = ({ route }: any) => {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [finished, setFinished] = useState(false);
   const [activeLetter, setActiveLetter] = useState("B");
   const [selectingLetter, setSelectingLetter] = useState(true);
   const [currentTurn, setCurrentTurn] = useState(1);
-  const [players, setPlayers] = useState([]);
+  const [players, setPlayers] = useState<[] | playerClass[]>([]);
+  const [currentPlayer, setCurrentPlayer] = useState<playerClass>([] as any);
   const [userId, setUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [playing, setPlaying] = useState(true);
   const [contesting, setContesting] = useState(false);
+  const [tallying, setTallying] = useState(false);
 
   const { socket } = useSocketcontext();
 
   const { room_id, public: isPublic } = route.params;
-  const handleFinish = () => {
+  /**
+   ** Handles the finish event and emits an END_ROUND event to the socket.
+   * *sends maxTurns boundary to server
+   * *maxTurns is used to check if the round is safe to increase or reset if out of bounds on the serverside
+   * @param {any} answers - The answers provided by the user.
+   */
+
+  const handleFinish = (answers: any) => {
+    console.info("these are the answers", answers);
     socket?.emit("END_ROUND", {
       room_id,
       currentTurn,
       maxTurns: players.length,
+      answers,
     });
   };
 
@@ -184,6 +79,12 @@ const Level = ({ route }) => {
   const handleLetterSelect = (letter: string) => {
     socket?.emit("SET_LETTER", { letter, room_id }, (letter: string) => {
       console.log("Sent LETTER > ", letter);
+    });
+  };
+
+  const handleReady = (username: string) => {
+    socket?.emit("READY_PLAYER", { username, room_id }, (res) => {
+      console.info(res);
     });
   };
 
@@ -202,9 +103,13 @@ const Level = ({ route }) => {
    * @return {Promise<void>} A promise that resolves when the initialization is complete.
    */
   const handleInit = async () => {
-    const { players, maxTurns, turn_id } = await initLevel(room_id);
+    const { players, maxTurns, turn_id, currentPlayer } = await initLevel(
+      room_id
+    );
     setPlayers(players);
     setUserId(turn_id);
+    setCurrentPlayer(currentPlayer);
+    socket?.emit("PING_ROOM", { room_id });
   };
 
   /*
@@ -229,11 +134,23 @@ const Level = ({ route }) => {
       setSelectingLetter(false);
     });
 
+    socket?.on("PLAYER_READY", (data: any) => {
+      const { username } = data;
+      console.info("player ready", username);
+    });
+    socket?.on("ALL_PLAYERS_READY", (data: any) => {
+      const { message } = data;
+      console.info("player ready", message);
+      setTallying(false);
+      setSelectingLetter(true);
+    });
+
     socket?.on("ROUND_ENDED", (data: any) => {
       const { turn } = data;
       setCurrentTurn(turn);
-      setFinished(true);
-      setSelectingLetter(true);
+      setTallying(true);
+      // setFinished(true);
+      // setSelectingLetter(true);
     });
   }, [socket]);
 
@@ -256,17 +173,20 @@ const Level = ({ route }) => {
         className={`flex-1 flex   pt-8 px-2 relative transition-all duration-200 ease-in  ${indexColor[index]}`}
       >
         <HUD turnId={currentTurn} activeLetter={activeLetter} />
-        {/* <View className="pt-12">
-          <Button
-            title="socket"
-            onPress={() => checkAnimal("tarantula")}
-          ></Button>
-        </View> */}
-        {!selectingLetter && !finished && (
+        {!selectingLetter && !tallying && (
           <AnswerView
-            handleFinish={handleFinish}
+            currentPlayer={currentPlayer}
+            tallying={tallying}
+            handleFinish={(answers) => handleFinish(answers)}
             index={index}
             setIndex={setIndex}
+          />
+        )}
+
+        {tallying && (
+          <TallyScreen
+            players={players}
+            handleReady={(player) => handleReady(player)}
           />
         )}
         <WaitScreen

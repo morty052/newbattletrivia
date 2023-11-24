@@ -4,7 +4,7 @@ import { useSocketcontext } from "../../hooks/useSocketContext";
 import { useUser } from "@clerk/clerk-expo";
 import { Loader } from "../../components";
 import { useEffect, useState } from "react";
-import { checkForKey } from "../../lib/secure-store";
+import { checkForKey, save, getValueFor } from "../../lib/secure-store";
 
 function PublicMatch({ route }) {
   const [match, setmatch] = useState<null | string>("");
@@ -28,6 +28,14 @@ function PublicMatch({ route }) {
   const username = user?.username;
 
   const { room_id } = route.params;
+
+  async function checkForRoom() {
+    const previousRoomData = await getValueFor("currentRoom");
+    if (previousRoomData) {
+      const previousRoom = JSON.parse(previousRoomData);
+      navigation.navigate("Level", { ...previousRoom, public: true });
+    }
+  }
 
   async function handleMatchMaking() {
     const { username } = (await checkForKey()) ?? {};
@@ -58,6 +66,10 @@ function PublicMatch({ route }) {
   }
 
   useEffect(() => {
+    checkForRoom();
+  }, []);
+
+  useEffect(() => {
     handleMatchMaking();
   }, [socket]);
 
@@ -72,7 +84,7 @@ function PublicMatch({ route }) {
   useEffect(() => {
     socket?.on(
       "JOINED_PUBLIC_ROOM",
-      (res: {
+      async (res: {
         room_id: string;
         status: "CREATED" | "JOINED";
         seeker_id: string;
@@ -89,6 +101,11 @@ function PublicMatch({ route }) {
             break;
           case "JOINED":
             console.log("PLAYER ACCEPTED NAVIGATING NOW", res);
+
+            const roomData = JSON.stringify(res);
+
+            await save("currentRoom", roomData);
+
             navigation.navigate("Level", {
               room_id,
               seeker_id,
@@ -162,9 +179,7 @@ function PublicMatch({ route }) {
 
             <Button
               title="Test name Space"
-              onPress={() =>
-                socket?.emit("TEST_NAME_SPACE", { room_id: test_id })
-              }
+              onPress={() => () => handleAccept()}
             />
           </View>
         </>
