@@ -1,10 +1,8 @@
 import { TextInput, View, Text, Pressable, Image } from "react-native";
 import { useEffect, useReducer, useState } from "react";
-import { Screen } from "../../../../components";
-import { AnswerBar } from "../answerbar";
-import { PlayerBar } from "../playerbar";
-import { playerClass } from "../../features/setPlayer";
+import { playerClass } from "../../../../types/player";
 import { Mic } from "../../../../components";
+import { useSocketcontext } from "../../../../hooks/useSocketContext";
 
 const AnimalScreen = ({
   handleSubmit,
@@ -290,15 +288,15 @@ const Answer = ({ title, label }: { title: string; label: labelNames }) => {
 export function AnswerView({
   index,
   setIndex,
-  handleFinish,
-  tallying,
   currentPlayer,
+  timeUp,
+  room_id,
 }: {
   index: number;
   setIndex: any;
-  handleFinish: (answer: any) => void;
-  tallying: boolean;
   currentPlayer: playerClass;
+  timeUp: boolean;
+  room_id: string;
 }) {
   const [answer, setAnswer] = useState({
     name: "",
@@ -306,18 +304,34 @@ export function AnswerView({
     place: "",
     thing: "",
   });
-  // const [tallying, setTallying] = useState(false);
-  const [contesting, setContesting] = useState(false);
-  // const [index, setIndex] = useState(0);
 
   const emptyAnswers = Object.values(answer).filter((value) => value == "");
-  const { name, animal, place, thing } = answer;
+
+  const { socket } = useSocketcontext();
+
+  const handleFinish = (answers: any) => {
+    console.info("these are the answers", answers);
+
+    socket?.emit(
+      "END_ROUND",
+      {
+        room_id,
+        answers,
+        player: currentPlayer,
+      },
+      (res: any) => {
+        console.log(res);
+      }
+    );
+  };
 
   function handleSubmit(id: string, choice: string) {
     setAnswer((prev) => ({
       ...prev,
       [id]: choice,
     }));
+
+    currentPlayer.populateSingleChoice(id, choice);
 
     if (index === 3) {
       setIndex(0);
@@ -333,17 +347,18 @@ export function AnswerView({
     }
 
     if (emptyAnswers.length === 0) {
-      handleFinish(answer);
       currentPlayer.populateChoices(answer);
-      // setAnswer({
-      //   name: "",
-      //   animal: "",
-      //   place: "",
-      //   thing: "",
-      // });
       return;
     }
   }, [answer]);
+
+  useEffect(() => {
+    if (!timeUp) {
+      return;
+    } else if (timeUp) {
+      handleFinish(answer);
+    }
+  }, [timeUp]);
 
   const indexes: any = {
     0: <NameScreen handleSubmit={(id, answer) => handleSubmit(id, answer)} />,
@@ -355,27 +370,7 @@ export function AnswerView({
   return (
     <View>
       <>
-        {!tallying ? (
-          <View>{indexes[index]}</View>
-        ) : (
-          <>
-            <View className="space-y-8 px-2 pt-12">
-              <PlayerBar
-                contesting={contesting}
-                setContesting={setContesting}
-              />
-
-              {contesting && (
-                <>
-                  <AnswerBar title={name} label="Name" />
-                  <AnswerBar title={animal} label="Animal" />
-                  <AnswerBar title={place} label="Place" />
-                  <AnswerBar title={thing} label="Thing" />
-                </>
-              )}
-            </View>
-          </>
-        )}
+        <View>{indexes[index]}</View>
       </>
     </View>
   );

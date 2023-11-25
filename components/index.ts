@@ -1,6 +1,7 @@
 export * from "./screen";
 export * from "./waitscreen";
 export * from "./mic";
+export * from "./stopwatch";
 
 import ProgressBar from "./progressBar/ProgressBar";
 import BottomNav from "./bottomnav/BottomNav";

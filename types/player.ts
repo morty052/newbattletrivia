@@ -74,5 +74,8 @@ export interface playerClass {
   };
   points: number;
   populateChoices: (choices: any) => void;
+  populateSingleChoice: (key: string, value: string) => void;
   clearChoices: () => void;
+  clearSingleChoice: (key: string) => void;
+  tallyScore: () => void;
 }

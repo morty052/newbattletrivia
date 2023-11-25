@@ -11,6 +11,16 @@ export async function getPlayer(players: any) {
 
   return currentPlayer;
 }
+export function isCurrentPlayer(
+  currentPlayer: playerClass,
+  username: string
+): boolean {
+  if (currentPlayer.username == username) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 type labelNames = "Name" | "Animal" | "Place" | "Thing";
 
@@ -47,8 +57,10 @@ export async function handleAnswerContest(
     const { isReal } = data;
 
     if (!isReal) {
+      console.log("username", currentPlayer.username);
       console.log("check came back as", isReal);
-      currentPlayer;
+      currentPlayer.clearSingleChoice(label.toLowerCase());
+      console.log(currentPlayer.choices);
     }
   } catch (error) {
     console.error(error);

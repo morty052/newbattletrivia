@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { player } from "../types";
 import Toast from "react-native-root-toast";
+import { user } from "../types/user";
 
 export type Debuffs = "crushed" | "confused" | "snared" | "empowered" | "none";
 export type characterName =
@@ -358,6 +359,14 @@ class Player {
     console.info("this player chose", this.choices);
   };
 
+  populateSingleChoice = (
+    label: "name" | "animal" | "place" | "thing",
+    answer: string
+  ) => {
+    this.choices[label] = answer;
+    console.info("this player chose", answer);
+  };
+
   clearChoices = () => {
     this.choices = {
       name: "",
@@ -365,6 +374,16 @@ class Player {
       place: "",
       thing: "",
     };
+  };
+
+  clearSingleChoice = (keyToFind: string) => {
+    const keyToClear = Object.keys(this.choices).find(
+      (key) => key == keyToFind
+    );
+
+    this.choices[keyToClear] = "Busted";
+
+    console.log(keyToClear);
   };
 
   addPoints = (score: number) => {
@@ -377,7 +396,7 @@ class Player {
 
   checkEmptyChoices = () => {
     const emptyAnswers = Object.values(this.choices).filter(
-      (value) => value == ""
+      (value) => value == "" || value == "Busted"
     );
 
     if (emptyAnswers.length > 0) {
@@ -393,8 +412,8 @@ class Player {
     const maxpoints = 4 - emptyAnswers;
     const score = maxpoints * pointsPerAnswer;
 
-    this.addPoints(score);
-    console.log(this.points);
+    // this.addPoints(score);
+    console.log(score);
 
     return this.points;
   };

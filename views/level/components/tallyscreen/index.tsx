@@ -2,10 +2,9 @@ import { View, Text, ActivityIndicator } from "react-native";
 import React, { useEffect, useState } from "react";
 import { PlayerBar } from "../playerbar";
 import { AnswerBar } from "../answerbar";
-import { playerClass } from "../../features/setPlayer";
 import { Button, Loader } from "../../../../components";
-import { Screen } from "../../../../components";
 import { getPlayer, handleAnswerContest } from "../../features/levelActions";
+import { playerClass } from "../../../../types/player";
 
 type Props = {
   players: playerClass[];
@@ -23,7 +22,14 @@ export const TallyScreen = ({ players, handleReady }: Props) => {
   const [inspecting, setInspecting] = useState<null | playerClass>(null);
   const [contesting, setContesting] = useState(false);
   const [facts, setFacts] = useState<null | fact>(null);
-  const [currentPlayer, setCurrentPlayer] = useState(null);
+  const [currentPlayer, setCurrentPlayer] = useState<null | playerClass>(null);
+
+  const playerTallyTable = players.map((player: playerClass) => {
+    return {
+      choices: player.choices,
+      username: player.username,
+    };
+  });
 
   const { choices } = inspecting ?? {};
   const { name, animal, place, thing } = choices ?? {};
@@ -34,6 +40,7 @@ export const TallyScreen = ({ players, handleReady }: Props) => {
     handleAnswerContest(answer, label, {
       setContesting,
       setFacts,
+      currentPlayer,
     });
   }
 
@@ -57,6 +64,7 @@ export const TallyScreen = ({ players, handleReady }: Props) => {
           <>
             {players?.map((player: playerClass, index: number) => (
               <PlayerBar
+                isCurrentPlayer={player.username === currentPlayer?.username}
                 player={player}
                 handleReady={() => handleReady(player.username)}
                 inspecting={inspecting}

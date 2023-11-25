@@ -10,11 +10,9 @@ import {
 import { View, Button, Text, Pressable } from "react-native";
 import { useSocketcontext } from "../../hooks/useSocketContext";
 import { Loader, Screen } from "../../components";
-import { Audio } from "expo-av";
-import * as FileSystem from "expo-file-system";
 import { initLevel } from "./features/initLevel";
-import { useNavigation } from "@react-navigation/native";
-import { playerClass } from "./features/setPlayer";
+import { playerClass } from "../../types/player";
+import { useStopWatch } from "../../components";
 
 type Props = {};
 
@@ -38,21 +36,35 @@ async function checkAnimal(animal: string) {
 const Level = ({ route }: any) => {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
-  const [finished, setFinished] = useState(false);
-  const [activeLetter, setActiveLetter] = useState("B");
+  const [activeLetter, setActiveLetter] = useState("A");
   const [selectingLetter, setSelectingLetter] = useState(true);
   const [currentTurn, setCurrentTurn] = useState(1);
   const [players, setPlayers] = useState<[] | playerClass[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<playerClass>([] as any);
   const [userId, setUserId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [playing, setPlaying] = useState(true);
-  const [contesting, setContesting] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  // const [timeUp, setTimeUp] = useState(false);
   const [tallying, setTallying] = useState(false);
 
   const { socket } = useSocketcontext();
-
+  const { time, timeUp, setTimeUp } = useStopWatch(playing);
   const { room_id, public: isPublic } = route.params;
+
+  const state = {
+    index,
+    activeLetter,
+    selectingLetter,
+    currentTurn,
+    // players,
+    // currentPlayer,
+    userId,
+    playing,
+    timeUp,
+    tallying,
+  };
+
+  const stateView = JSON.stringify(state, null, 2);
+
   /**
    ** Handles the finish event and emits an END_ROUND event to the socket.
    * *sends maxTurns boundary to server
@@ -60,15 +72,24 @@ const Level = ({ route }: any) => {
    * @param {any} answers - The answers provided by the user.
    */
 
-  const handleFinish = (answers: any) => {
-    console.info("these are the answers", answers);
-    socket?.emit("END_ROUND", {
-      room_id,
-      currentTurn,
-      maxTurns: players.length,
-      answers,
-    });
-  };
+  // const handleFinish = (answers: any) => {
+  //   console.info("these are the answers", answers);
+
+  //   socket?.emit(
+  //     "END_ROUND",
+  //     {
+  //       room_id,
+  //       currentTurn,
+  //       maxTurns: players.length,
+  //       answers,
+  //       player: currentPlayer,
+  //     },
+  //     (res) => {
+  //       setPlaying(false);
+  //       setTallying(true);
+  //     }
+  //   );
+  // };
 
   /**
    * handles the selection of a letter.
@@ -110,6 +131,7 @@ const Level = ({ route }: any) => {
     setUserId(turn_id);
     setCurrentPlayer(currentPlayer);
     socket?.emit("PING_ROOM", { room_id });
+    // setPlaying(true);
   };
 
   /*
@@ -123,34 +145,50 @@ const Level = ({ route }: any) => {
     socket?.on("SWITCH_TURN", (data: any) => {
       const { turn } = data;
       handleTurn(turn);
-      setFinished(false);
       setSelectingLetter(true);
     });
 
+    /*
+     * handles letter switch event from server
+     * sets the active letter to the letter provided
+     * sets the playing state to true
+     */
     socket?.on("SWITCH_LETTER", (data: any) => {
       const { letter } = data;
       setActiveLetter(letter);
-      setFinished(false);
       setSelectingLetter(false);
+      setTallying(false);
+      setPlaying(true);
     });
 
+    /*
+     * handles single player ready event from server
+     */
     socket?.on("PLAYER_READY", (data: any) => {
       const { username } = data;
       console.info("player ready", username);
     });
+
+    /*
+     * handles all players ready event from server
+     */
     socket?.on("ALL_PLAYERS_READY", (data: any) => {
-      const { message } = data;
-      console.info("player ready", message);
       setTallying(false);
       setSelectingLetter(true);
     });
 
+    /*
+     * handles round ended event from server
+     * sets the current turn to the next player
+     * sets the playing state to false
+     * sets the tallying state to true
+     */
+
     socket?.on("ROUND_ENDED", (data: any) => {
       const { turn } = data;
       setCurrentTurn(turn);
+      setPlaying(false);
       setTallying(true);
-      // setFinished(true);
-      // setSelectingLetter(true);
     });
   }, [socket]);
 
@@ -172,12 +210,12 @@ const Level = ({ route }: any) => {
       <View
         className={`flex-1 flex   pt-8 px-2 relative transition-all duration-200 ease-in  ${indexColor[index]}`}
       >
-        <HUD turnId={currentTurn} activeLetter={activeLetter} />
-        {!selectingLetter && !tallying && (
+        <HUD time={time} turnId={currentTurn} activeLetter={activeLetter} />
+        {playing && (
           <AnswerView
+            room_id={room_id}
+            timeUp={timeUp}
             currentPlayer={currentPlayer}
-            tallying={tallying}
-            handleFinish={(answers) => handleFinish(answers)}
             index={index}
             setIndex={setIndex}
           />
@@ -195,6 +233,7 @@ const Level = ({ route }: any) => {
           turnId={currentTurn}
           selectingLetter={selectingLetter}
         />
+        <Text>{stateView}</Text>
         <OptionPicker setIndex={setIndex} open={open} setOpen={setOpen} />
         <LetterPicker open={open} setOpen={setOpen} />
       </View>
