@@ -26,7 +26,7 @@ const AnimalScreen = ({
         </View>
       )}
       {/* Submit Button */}
-      {animal.length > 2 && (
+      {animal.length >= 1 && (
         <Pressable
           onPress={() => handleSubmit(id, animal)}
           className="bg-yellow-200 rounded-lg py-2"
@@ -79,7 +79,7 @@ const PlaceScreen = ({
         </View>
       )}
       {/* Submit Button */}
-      {place.length > 2 && (
+      {place.length >= 1 && (
         <Pressable
           onPress={() => handleSubmit(id, place)}
           className="bg-yellow-200 rounded-lg py-2"
@@ -132,7 +132,7 @@ const ThingScreen = ({
         </View>
       )}
       {/* Submit Button */}
-      {thing.length > 2 && (
+      {thing.length >= 1 && (
         <Pressable
           onPress={() => handleSubmit(id, thing)}
           className="bg-yellow-200 rounded-lg py-2"
@@ -217,7 +217,7 @@ const NameScreen = ({
       )}
 
       {/* Submit Button */}
-      {name.length > 2 && (
+      {name.length >= 1 && (
         <Pressable
           onPress={() => handleSubmit(id, name)}
           className="bg-yellow-200 rounded-lg py-2"

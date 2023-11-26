@@ -172,7 +172,15 @@ const NameScreen = ({
   const res = { room_id: "", status: "", seeker_id: "", match_id: "" };
 
   async function saveRoom() {
-    // await save("currentRoom", JSON.stringify(res));
+    const res = {
+      message: "you abel joined room TnNSRWyhzlHZYlq6mYen2j",
+      status: "JOINED",
+      seeker_id: "TnNSRWyhzlHZYlq6mYeYcy",
+      match_id: "kKZ8yWBgonvfDRoPPBnj6V",
+      room_id: "TnNSRWyhzlHZYlq6mYen2j",
+      maxTurns: 1,
+    };
+    await save("currentRoom", JSON.stringify(res));
     const room = await getValueFor("currentRoom");
     console.log(room);
     // await deleteKey("currentRoom");

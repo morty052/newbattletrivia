@@ -50,20 +50,20 @@ const Level = ({ route }: any) => {
   const { time, timeUp, setTimeUp } = useStopWatch(playing);
   const { room_id, public: isPublic } = route.params;
 
-  const state = {
-    index,
-    activeLetter,
-    selectingLetter,
-    currentTurn,
-    // players,
-    // currentPlayer,
-    userId,
-    playing,
-    timeUp,
-    tallying,
-  };
+  // const state = {
+  //   index,
+  //   activeLetter,
+  //   selectingLetter,
+  //   currentTurn,
+  //   // players,
+  //   // currentPlayer,
+  //   userId,
+  //   playing,
+  //   timeUp,
+  //   tallying,
+  // };
 
-  const stateView = JSON.stringify(state, null, 2);
+  // const stateView = JSON.stringify(state, null, 2);
 
   /**
    ** Handles the finish event and emits an END_ROUND event to the socket.
@@ -106,6 +106,12 @@ const Level = ({ route }: any) => {
       return;
     }
     setCurrentTurn(turn);
+  };
+
+  const handleFinishTally = () => {
+    setIndex(0);
+    setTallying(false);
+    setSelectingLetter(true);
   };
 
   /**
@@ -153,22 +159,6 @@ const Level = ({ route }: any) => {
     });
 
     /*
-     * handles single player ready event from server
-     */
-    socket?.on("PLAYER_READY", (data: any) => {
-      const { username } = data;
-      console.info("player ready", username);
-    });
-
-    /*
-     * handles all players ready event from server
-     */
-    socket?.on("ALL_PLAYERS_READY", (data: any) => {
-      setTallying(false);
-      setSelectingLetter(true);
-    });
-
-    /*
      * handles round ended event from server
      * sets the current turn to the next player
      * sets the playing state to false
@@ -201,10 +191,14 @@ const Level = ({ route }: any) => {
       <View
         className={`flex-1 flex   pt-8 px-2 relative transition-all duration-200 ease-in  ${indexColor[index]}`}
       >
-        <HUD time={time} turnId={currentTurn} activeLetter={activeLetter} />
+        <HUD
+          time={time}
+          turnId={currentPlayer.points}
+          activeLetter={activeLetter}
+        />
         {playing && (
           <AnswerView
-            handleFinish={handleFinish}
+            handleFinish={(answers) => handleFinish(answers)}
             room_id={room_id}
             timeUp={timeUp}
             currentPlayer={currentPlayer}
@@ -217,7 +211,7 @@ const Level = ({ route }: any) => {
           <TallyScreen
             currentPlayer={currentPlayer}
             room_id={room_id}
-            players={players}
+            handleFinishTally={handleFinishTally}
             handleReady={(player) => handleReady(player)}
           />
         )}
@@ -227,7 +221,7 @@ const Level = ({ route }: any) => {
           turnId={currentTurn}
           selectingLetter={selectingLetter}
         />
-        <Text>{stateView}</Text>
+        {/* <Text>{stateView}</Text> */}
         <OptionPicker setIndex={setIndex} open={open} setOpen={setOpen} />
         <LetterPicker open={open} setOpen={setOpen} />
       </View>

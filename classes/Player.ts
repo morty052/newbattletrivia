@@ -381,7 +381,7 @@ class Player {
       (key) => key == keyToFind
     );
 
-    this.choices[keyToClear] = "Busted";
+    this.choices[keyToClear] = "BUSTED";
 
     console.log(keyToClear);
   };
@@ -396,7 +396,7 @@ class Player {
 
   checkEmptyChoices = () => {
     const emptyAnswers = Object.values(this.choices).filter(
-      (value) => value == "" || value == "Busted"
+      (value) => value == "" || value == "BUSTED"
     );
 
     if (emptyAnswers.length > 0) {
@@ -412,7 +412,7 @@ class Player {
     const maxpoints = 4 - emptyAnswers;
     const score = maxpoints * pointsPerAnswer;
 
-    // this.addPoints(score);
+    this.addPoints(score);
     console.log(score);
 
     return this.points;

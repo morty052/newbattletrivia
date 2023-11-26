@@ -8,7 +8,8 @@ import { playerClass } from "../../../../types/player";
 import { useSocketcontext } from "../../../../hooks/useSocketContext";
 
 type Props = {
-  players: playerClass[];
+  // players: playerClass[];
+  handleFinishTally: (scores: any) => void;
   handleReady: (username: string) => void;
   room_id: string;
   currentPlayer: playerClass;
@@ -22,7 +23,7 @@ type fact = {
 };
 
 export const TallyScreen = ({
-  players,
+  handleFinishTally,
   handleReady,
   room_id,
   currentPlayer,
@@ -109,6 +110,24 @@ export const TallyScreen = ({
         console.info("its you buddy", username, labelToChange);
         currentPlayer?.clearSingleChoice(labelToChange);
       }
+    });
+
+    /*
+     * handles single player ready event from server
+     */
+    socket?.on("PLAYER_READY", (data: any) => {
+      const { username } = data;
+      console.info("player ready", username);
+    });
+
+    /*
+     * handles all players ready event from server
+     */
+
+    socket?.on("ALL_PLAYERS_READY", (data: any) => {
+      currentPlayer.tallyScore();
+      currentPlayer.clearChoices();
+      handleFinishTally("ALL_PLAYERS_READY");
     });
   }, [socket]);
 
