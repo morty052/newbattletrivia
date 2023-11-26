@@ -46,7 +46,7 @@ export const StopWatch = ({ playing, timeUp, setTimeUp }: Props) => {
 };
 
 export const useStopWatch = (playing: boolean) => {
-  const [time, setTime] = useState(10);
+  const [time, setTime] = useState(30);
   const [timeUp, setTimeUp] = useState(false);
 
   const decTimer = () => {
@@ -67,7 +67,7 @@ export const useStopWatch = (playing: boolean) => {
 
   useEffect(() => {
     if (!playing) {
-      setTime(10);
+      setTime(30);
       setTimeUp(false);
       return;
     }

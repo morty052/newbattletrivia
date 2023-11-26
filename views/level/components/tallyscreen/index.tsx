@@ -5,10 +5,13 @@ import { AnswerBar } from "../answerbar";
 import { Button, Loader } from "../../../../components";
 import { getPlayer, handleAnswerContest } from "../../features/levelActions";
 import { playerClass } from "../../../../types/player";
+import { useSocketcontext } from "../../../../hooks/useSocketContext";
 
 type Props = {
   players: playerClass[];
   handleReady: (username: string) => void;
+  room_id: string;
+  currentPlayer: playerClass;
 };
 
 type labelNames = "Name" | "Animal" | "Place" | "Thing";
@@ -18,42 +21,98 @@ type fact = {
   isReal: boolean;
 };
 
-export const TallyScreen = ({ players, handleReady }: Props) => {
+export const TallyScreen = ({
+  players,
+  handleReady,
+  room_id,
+  currentPlayer,
+}: Props) => {
   const [inspecting, setInspecting] = useState<null | playerClass>(null);
   const [contesting, setContesting] = useState(false);
   const [facts, setFacts] = useState<null | fact>(null);
-  const [currentPlayer, setCurrentPlayer] = useState<null | playerClass>(null);
+  // const [currentPlayer, setCurrentPlayer] = useState<null | playerClass>(null);
+  const [tally, setTally] = useState<null | playerClass[]>(null);
 
-  const playerTallyTable = players.map((player: playerClass) => {
-    return {
-      choices: player.choices,
-      username: player.username,
-    };
-  });
+  const { socket } = useSocketcontext();
 
-  const { choices } = inspecting ?? {};
+  const { choices, username } = inspecting ?? {};
   const { name, animal, place, thing } = choices ?? {};
 
   const { description, isReal } = facts ?? {};
 
+  const handleBust = (username: string, label: any) => {
+    const updatedTally = tally?.map((player) => {
+      if (player.username === username) {
+        return {
+          ...player,
+          choices: {
+            ...player.choices,
+            [label.toLowerCase()]: "BUSTED",
+          },
+        };
+      }
+
+      return player;
+    });
+
+    const labelToChange = label.toLowerCase();
+
+    socket?.emit("BUSTED_PLAYER", {
+      room_id,
+      username,
+      updatedTally,
+      labelToChange,
+    });
+  };
+
   async function handleContest(answer: string, label: labelNames) {
-    handleAnswerContest(answer, label, {
+    const isReal = await handleAnswerContest(answer, label, {
       setContesting,
       setFacts,
-      currentPlayer,
+    });
+
+    if (isReal) {
+      console.log("Correct check came back as", isReal);
+    }
+
+    if (!isReal) {
+      handleBust(username as string, label);
+    }
+  }
+
+  async function handleGetTally() {
+    socket?.emit("GET_TALLY", { room_id }, async (res: any) => {
+      const { playerTally } = res;
+      setTally(playerTally);
+      console.log("tally", playerTally);
+      // const currentPlayer = (await getPlayer(players)) ?? {};
+      const currentPlayerTally = playerTally.find(
+        (player: any) => player.username === currentPlayer.username
+      );
+      currentPlayer.populateChoices(currentPlayerTally.choices);
     });
   }
 
+  /*
+   * Fetch current player from server
+   */
   useEffect(() => {
-    async function fetchCurrentPlayer() {
-      const currentPlayer = (await getPlayer(players)) ?? {};
-      setCurrentPlayer(currentPlayer);
-    }
-
-    fetchCurrentPlayer();
+    handleGetTally();
   }, []);
 
-  if (!currentPlayer) {
+  useEffect(() => {
+    socket?.on("BUSTED_PLAYER", (data) => {
+      console.info("busted player", currentPlayer?.username);
+      const { updatedTally, username, labelToChange } = data;
+      setTally(updatedTally);
+      if (username === currentPlayer?.username) {
+        console.info("its you buddy", username, labelToChange);
+        currentPlayer?.clearSingleChoice(labelToChange);
+      }
+    });
+  }, [socket]);
+
+  if (!tally || !currentPlayer) {
     return <Loader />;
   }
 
@@ -62,7 +121,7 @@ export const TallyScreen = ({ players, handleReady }: Props) => {
       <View className="space-y-8 px-2 pt-12">
         {!inspecting && (
           <>
-            {players?.map((player: playerClass, index: number) => (
+            {tally?.map((player: playerClass, index: number) => (
               <PlayerBar
                 isCurrentPlayer={player.username === currentPlayer?.username}
                 player={player}
@@ -119,10 +178,11 @@ export const TallyScreen = ({ players, handleReady }: Props) => {
 
                 <View className="mt-4">
                   <Button
-                    title="Next"
+                    title="Accept"
                     onPress={() => {
                       setFacts(null);
                       setContesting(false);
+                      setInspecting(null);
                     }}
                   />
                 </View>

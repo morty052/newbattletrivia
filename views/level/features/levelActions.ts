@@ -32,7 +32,7 @@ type fact = {
 type handleContestProps = {
   setContesting: Dispatch<SetStateAction<boolean>>;
   setFacts: Dispatch<SetStateAction<fact | null>>;
-  currentPlayer: playerClass;
+  // currentPlayer: null | playerClass;
 };
 
 export async function handleAnswerContest(
@@ -40,7 +40,7 @@ export async function handleAnswerContest(
   label: labelNames,
   props: handleContestProps
 ) {
-  const { setContesting, setFacts, currentPlayer } = props;
+  const { setContesting, setFacts } = props;
   setContesting(true);
 
   const queryLabel = label.toLowerCase();
@@ -48,20 +48,16 @@ export async function handleAnswerContest(
   const baseUrl = `http://192.168.100.16:3000/ai/${query}`;
 
   try {
-    console.log("this is label", label);
-    console.log("this is url", baseUrl);
     const response = await fetch(baseUrl);
     const data = await response.json();
-    console.log(data);
     setFacts(data);
     const { isReal } = data;
 
     if (!isReal) {
-      console.log("username", currentPlayer.username);
-      console.log("check came back as", isReal);
-      currentPlayer.clearSingleChoice(label.toLowerCase());
-      console.log(currentPlayer.choices);
+      return false;
     }
+
+    return true;
   } catch (error) {
     console.error(error);
   }

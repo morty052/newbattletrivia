@@ -2,7 +2,6 @@ import { TextInput, View, Text, Pressable, Image } from "react-native";
 import { useEffect, useReducer, useState } from "react";
 import { playerClass } from "../../../../types/player";
 import { Mic } from "../../../../components";
-import { useSocketcontext } from "../../../../hooks/useSocketContext";
 
 const AnimalScreen = ({
   handleSubmit,
@@ -291,12 +290,14 @@ export function AnswerView({
   currentPlayer,
   timeUp,
   room_id,
+  handleFinish,
 }: {
   index: number;
   setIndex: any;
   currentPlayer: playerClass;
   timeUp: boolean;
   room_id: string;
+  handleFinish: (answers: any) => void;
 }) {
   const [answer, setAnswer] = useState({
     name: "",
@@ -306,24 +307,6 @@ export function AnswerView({
   });
 
   const emptyAnswers = Object.values(answer).filter((value) => value == "");
-
-  const { socket } = useSocketcontext();
-
-  const handleFinish = (answers: any) => {
-    console.info("these are the answers", answers);
-
-    socket?.emit(
-      "END_ROUND",
-      {
-        room_id,
-        answers,
-        player: currentPlayer,
-      },
-      (res: any) => {
-        console.log(res);
-      }
-    );
-  };
 
   function handleSubmit(id: string, choice: string) {
     setAnswer((prev) => ({

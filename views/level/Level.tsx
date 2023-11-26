@@ -72,24 +72,15 @@ const Level = ({ route }: any) => {
    * @param {any} answers - The answers provided by the user.
    */
 
-  // const handleFinish = (answers: any) => {
-  //   console.info("these are the answers", answers);
-
-  //   socket?.emit(
-  //     "END_ROUND",
-  //     {
-  //       room_id,
-  //       currentTurn,
-  //       maxTurns: players.length,
-  //       answers,
-  //       player: currentPlayer,
-  //     },
-  //     (res) => {
-  //       setPlaying(false);
-  //       setTallying(true);
-  //     }
-  //   );
-  // };
+  const handleFinish = (answers: any) => {
+    socket?.emit("END_ROUND", {
+      room_id,
+      currentTurn,
+      maxTurns: players.length,
+      answers,
+      player: currentPlayer,
+    });
+  };
 
   /**
    * handles the selection of a letter.
@@ -213,6 +204,7 @@ const Level = ({ route }: any) => {
         <HUD time={time} turnId={currentTurn} activeLetter={activeLetter} />
         {playing && (
           <AnswerView
+            handleFinish={handleFinish}
             room_id={room_id}
             timeUp={timeUp}
             currentPlayer={currentPlayer}
@@ -223,6 +215,8 @@ const Level = ({ route }: any) => {
 
         {tallying && (
           <TallyScreen
+            currentPlayer={currentPlayer}
+            room_id={room_id}
             players={players}
             handleReady={(player) => handleReady(player)}
           />
