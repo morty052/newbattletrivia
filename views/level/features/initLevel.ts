@@ -38,34 +38,38 @@ async function getCurrentPlayer(players: any) {
 }
 
 export const initLevel = async (room_id: string) => {
-  const room = await getRoom(room_id);
-  const { players: playersData } = room;
+  try {
+    const room = await getRoom(room_id);
+    const { players: playersData } = room;
 
-  // TODO: MOVE PLAYERS MAP LOGIC TO SERVER SIDE
+    // TODO: MOVE PLAYERS MAP LOGIC TO SERVER SIDE
 
-  const players = playersData
-    .map((player: any) => ({
-      points: player.points,
-      username: player.controller.username,
-      status: player.status,
-      turn_id: player.turn_id,
-    }))
-    .map((player: any) => {
-      return setPlayer(player);
-    });
+    const players = playersData
+      .map((player: any) => ({
+        points: player.points,
+        username: player.controller.username,
+        status: player.status,
+        turn_id: player.turn_id,
+      }))
+      .map((player: any) => {
+        return setPlayer(player);
+      });
 
-  const maxTurns = players.length;
-  // setMaxTurns(maxTurns);
+    const maxTurns = players.length;
+    // setMaxTurns(maxTurns);
 
-  const currentPlayer = await getCurrentPlayer(players);
-  const { turn_id: rawTurn_id } = currentPlayer;
-  const turn_id = rawTurn_id + 1;
-  // setUserId(turn_id + 1);
+    const currentPlayer = await getCurrentPlayer(players);
+    const { turn_id: rawTurn_id } = currentPlayer;
+    const turn_id = rawTurn_id + 1;
+    // setUserId(turn_id + 1);
 
-  return {
-    players,
-    maxTurns,
-    turn_id,
-    currentPlayer,
-  };
+    return {
+      players,
+      maxTurns,
+      turn_id,
+      currentPlayer,
+    };
+  } catch (error) {
+    console.error(error);
+  }
 };

@@ -57,14 +57,6 @@ export const useStopWatch = (playing: boolean) => {
     setTime((prev) => prev - 1);
   };
 
-  // useEffect(() => {
-  //   if (!playing) {
-  //     return;
-  //   }
-
-  //   setTime(30);
-  // }, [playing]);
-
   useEffect(() => {
     if (!playing) {
       setTime(30);

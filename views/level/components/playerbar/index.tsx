@@ -30,14 +30,14 @@ export const PlayerBar = ({
             <Text>Contest</Text>
           </Pressable>
         )}
-        {isCurrentPlayer && (
+        {/* {isCurrentPlayer && (
           <Pressable
             onPress={() => handleReady(player.username)}
             className="text-white  text-center ml-4"
           >
             <Text>Ready</Text>
           </Pressable>
-        )}
+        )} */}
       </View>
 
       <View className="flex flex-row  justify-between  w-2/5">

@@ -77,5 +77,5 @@ export interface playerClass {
   populateSingleChoice: (key: string, value: string) => void;
   clearChoices: () => void;
   clearSingleChoice: (key: string) => void;
-  tallyScore: () => void;
+  tallyScore: () => number;
 }

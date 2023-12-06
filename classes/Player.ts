@@ -356,7 +356,6 @@ class Player {
     thing: string;
   }) => {
     this.choices = choices;
-    console.info("player choices populated", this.choices);
   };
 
   populateSingleChoice = (
@@ -415,7 +414,7 @@ class Player {
     this.addPoints(score);
     console.log(score);
 
-    return this.points;
+    return score;
   };
 }
 

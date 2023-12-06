@@ -1,18 +1,17 @@
 import { View, Text } from "react-native";
-import { StopWatch } from "../../../../components";
 
 export function HUD({
-  turnId,
+  points,
   activeLetter,
   time,
 }: {
   time: number;
-  turnId: number;
+  points: number;
   activeLetter: string;
 }) {
   return (
-    <View className="absolute top-10 inset-x-0 border border-white flex flex-row justify-between px-2">
-      <Text className="text-white text-2xl ">{turnId}</Text>
+    <View className="my-4 border border-white flex flex-row justify-between px-2 py-2 rounded-xl bg-white/30 ">
+      <Text className="text-white text-2xl ">{points}</Text>
       <Text className="text-white text-2xl ">{time}</Text>
       <Text className="text-white text-2xl ">{activeLetter}</Text>
     </View>

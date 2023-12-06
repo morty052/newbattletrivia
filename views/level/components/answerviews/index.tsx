@@ -12,19 +12,23 @@ const AnimalScreen = ({
   const [listening, setListening] = useState(false);
   const id = "animal";
   return (
-    <View className="flex justify-center space-y-8 h-4/5 px-4 pb-10">
-      <Text className="text-white text-5xl text-center ">Animal</Text>
-      {!listening ? (
-        <TextInput
-          onChangeText={(e) => setAnimal(e)}
-          placeholder="Name"
-          className="w-full border border-white py-2 rounded-lg bg-white text-center text-2xl  "
-        />
-      ) : (
-        <View className="w-full border border-white py-2 rounded-lg bg-white   ">
-          <Text className="text-gray-800 text-5xl text-center">{animal}</Text>
-        </View>
-      )}
+    <View className="flex justify-center space-y-6 h-4/5 px-4 pt-20 pb-10">
+      <>
+        <Text className="text-white text-4xl text-center font-semibold ">
+          Animal
+        </Text>
+        {!listening ? (
+          <TextInput
+            onChangeText={(e) => setAnimal(e)}
+            placeholder="Animal"
+            className="w-full border border-white py-2 rounded-lg bg-white text-center text-2xl  "
+          />
+        ) : (
+          <View className="w-full border border-white py-2 rounded-lg bg-white   ">
+            <Text className="text-gray-800 text-5xl text-center">{animal}</Text>
+          </View>
+        )}
+      </>
       {/* Submit Button */}
       {animal.length >= 1 && (
         <Pressable
@@ -65,19 +69,23 @@ const PlaceScreen = ({
   const [listening, setListening] = useState(false);
   const id = "place";
   return (
-    <View className="flex justify-center space-y-8 h-4/5 px-4 pb-10">
-      <Text className="text-white text-5xl text-center ">Place</Text>
-      {!listening ? (
-        <TextInput
-          onChangeText={(e) => setPlace(e)}
-          placeholder="Name"
-          className="w-full border border-white py-2 rounded-lg bg-white text-center text-2xl  "
-        />
-      ) : (
-        <View className="w-full border border-white py-2 rounded-lg bg-white   ">
-          <Text className="text-gray-800 text-5xl text-center">{place}</Text>
-        </View>
-      )}
+    <View className="flex justify-center space-y-6 h-4/5 pt-20 px-4 pb-10">
+      <>
+        <Text className="text-white text-4xl text-center font-semibold ">
+          Place
+        </Text>
+        {!listening ? (
+          <TextInput
+            onChangeText={(e) => setPlace(e)}
+            placeholder="Place"
+            className="w-full border border-white py-2 rounded-lg bg-white text-center text-2xl  "
+          />
+        ) : (
+          <View className="w-full border border-white py-2 rounded-lg bg-white   ">
+            <Text className="text-gray-800 text-5xl text-center">{place}</Text>
+          </View>
+        )}
+      </>
       {/* Submit Button */}
       {place.length >= 1 && (
         <Pressable
@@ -118,19 +126,23 @@ const ThingScreen = ({
   const [listening, setListening] = useState(false);
   const id = "thing";
   return (
-    <View className="flex justify-center space-y-8 h-4/5 px-4 pb-10">
-      <Text className="text-white text-5xl text-center ">Thing</Text>
-      {!listening ? (
-        <TextInput
-          onChangeText={(e) => setThing(e)}
-          placeholder="Name"
-          className="w-full border border-white py-2 rounded-lg bg-white text-center text-2xl  "
-        />
-      ) : (
-        <View className="w-full border border-white py-2 rounded-lg bg-white   ">
-          <Text className="text-gray-800 text-5xl text-center">{thing}</Text>
-        </View>
-      )}
+    <View className="flex justify-center space-y-6 h-4/5 pt-20 px-4 pb-10">
+      <>
+        <Text className="text-white text-4xl text-center font-semibold ">
+          Thing
+        </Text>
+        {!listening ? (
+          <TextInput
+            onChangeText={(e) => setThing(e)}
+            placeholder="Thing"
+            className="w-full border border-white py-2 rounded-lg bg-white text-center text-2xl  "
+          />
+        ) : (
+          <View className="w-full border border-white py-2 rounded-lg bg-white   ">
+            <Text className="text-gray-800 text-5xl text-center">{thing}</Text>
+          </View>
+        )}
+      </>
       {/* Submit Button */}
       {thing.length >= 1 && (
         <Pressable
@@ -202,19 +214,25 @@ const NameScreen = ({
   const [listening, setListening] = useState(false);
   const id = "name";
   return (
-    <View className=" flex justify-center space-y-6 h-4/5 px-4 pb-10 relative ">
-      <Text className="text-white text-5xl text-center ">Name</Text>
-      {!listening ? (
-        <TextInput
-          onChangeText={(e) => setName(e)}
-          placeholder="Name"
-          className="w-full border border-white py-2 rounded-lg bg-white text-center text-2xl  "
-        />
-      ) : (
-        <View className="w-full border border-white py-2 rounded-lg bg-white   ">
-          <Text className="text-gray-800 text-5xl text-center">{name}</Text>
-        </View>
-      )}
+    <View className=" flex justify-center space-y-6 h-4/5 pt-20 px-4 pb-10 relative ">
+      <>
+        <Text className="text-white text-4xl text-center font-semibold ">
+          Name
+        </Text>
+        {!listening ? (
+          <TextInput
+            onFocus={() => console.log("focus")}
+            onBlur={() => console.log("blur")}
+            onChangeText={(e) => setName(e)}
+            placeholder="Name"
+            className="w-full border border-white py-2 rounded-lg bg-white text-center text-2xl  "
+          />
+        ) : (
+          <View className="w-full border border-white py-2 rounded-lg bg-white   ">
+            <Text className="text-gray-800 text-5xl text-center">{name}</Text>
+          </View>
+        )}
+      </>
 
       {/* Submit Button */}
       {name.length >= 1 && (

@@ -13,22 +13,16 @@ import { Loader, Screen } from "../../components";
 import { initLevel } from "./features/initLevel";
 import { playerClass } from "../../types/player";
 import { useStopWatch } from "../../components";
+import alphabets from "../../constants/alphabets";
 
 type Props = {};
 
-async function checkAnimal(animal: string) {
-  try {
-    const url = `https://near-goat-82.deno.dev/ai/checkanimal?animal=${animal}`;
-    // "http://localhost:3000/ai/checkanimal?animal=vampire squid";
-    const res = await fetch(url, {
-      method: "GET",
-    });
-    const data = await res.json();
-    console.log(data);
-    return res;
-  } catch (error) {
-    console.log(error);
-  }
+function WaitingScreen(params: type) {
+  return (
+    <View className="flex-1 bg-fuchsia-500 flex justify-center items-center">
+      <Text className="text-white text-5xl">Waiting for other players</Text>
+    </View>
+  );
 }
 
 // TODO: REFACTOR STATES TO SINGLE OBJECT
@@ -45,6 +39,8 @@ const Level = ({ route }: any) => {
   const [playing, setPlaying] = useState(false);
   // const [timeUp, setTimeUp] = useState(false);
   const [tallying, setTallying] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const [availableLetters, setAvailableLetters] = useState<string[]>(alphabets);
 
   const { socket } = useSocketcontext();
   const { time, timeUp, setTimeUp } = useStopWatch(playing);
@@ -73,13 +69,26 @@ const Level = ({ route }: any) => {
    */
 
   const handleFinish = (answers: any) => {
-    socket?.emit("END_ROUND", {
-      room_id,
-      currentTurn,
-      maxTurns: players.length,
-      answers,
-      player: currentPlayer,
-    });
+    socket?.emit(
+      "END_ROUND",
+      {
+        room_id,
+        currentTurn,
+        maxTurns: players.length,
+        answers,
+        player: currentPlayer,
+      },
+      (data: any) => {
+        const { turn } = data;
+        setWaiting(true);
+        setPlaying(false);
+        setCurrentTurn(turn);
+        setTimeout(() => {
+          setWaiting(false);
+          setTallying(true);
+        }, 3000);
+      }
+    );
   };
 
   /**
@@ -91,12 +100,6 @@ const Level = ({ route }: any) => {
   const handleLetterSelect = (letter: string) => {
     socket?.emit("SET_LETTER", { letter, room_id }, (letter: string) => {
       console.log("Sent LETTER > ", letter);
-    });
-  };
-
-  const handleReady = (username: string) => {
-    socket?.emit("READY_PLAYER", { username, room_id }, (res) => {
-      console.info(res);
     });
   };
 
@@ -153,6 +156,11 @@ const Level = ({ route }: any) => {
     socket?.on("SWITCH_LETTER", (data: any) => {
       const { letter } = data;
       setActiveLetter(letter);
+      const newLetters = availableLetters.splice(
+        availableLetters.indexOf(letter),
+        1
+      );
+      console.log(availableLetters);
       setSelectingLetter(false);
       setTallying(false);
       setPlaying(true);
@@ -184,18 +192,24 @@ const Level = ({ route }: any) => {
     return <Loader />;
   }
 
+  if (waiting) {
+    return <Loader />;
+  }
+
   // const navigation = useNavigation();
 
   return (
     <>
       <View
-        className={`flex-1 flex   pt-8 px-2 relative transition-all duration-200 ease-in  ${indexColor[index]}`}
+        className={`flex-1 flex space-y-4  pt-8 pb-20 px-2 relative  transition-all duration-200 ease-in  ${indexColor[index]}`}
       >
-        <HUD
-          time={time}
-          turnId={currentPlayer.points}
-          activeLetter={activeLetter}
-        />
+        {playing && (
+          <HUD
+            time={time}
+            points={currentPlayer.points}
+            activeLetter={activeLetter}
+          />
+        )}
         {playing && (
           <AnswerView
             handleFinish={(answers) => handleFinish(answers)}
@@ -212,18 +226,20 @@ const Level = ({ route }: any) => {
             currentPlayer={currentPlayer}
             room_id={room_id}
             handleFinishTally={handleFinishTally}
-            handleReady={(player) => handleReady(player)}
           />
         )}
+
         <WaitScreen
+          alphabets={availableLetters}
           handleLetterSelect={(letter: string) => handleLetterSelect(letter)}
           userId={userId}
           turnId={currentTurn}
           selectingLetter={selectingLetter}
         />
         {/* <Text>{stateView}</Text> */}
-        <OptionPicker setIndex={setIndex} open={open} setOpen={setOpen} />
-        <LetterPicker open={open} setOpen={setOpen} />
+        {!tallying && (
+          <OptionPicker setIndex={setIndex} open={open} setOpen={setOpen} />
+        )}
       </View>
     </>
   );

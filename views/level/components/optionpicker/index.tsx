@@ -10,15 +10,15 @@ export function OptionPicker({
   setIndex: React.Dispatch<React.SetStateAction<number>>;
 }) {
   return (
-    <View className="flex-1 justify-end   pb-4 px-2 space-y-4">
-      {!open && (
+    <View className="absolute bottom-2 inset-x-0 px-2 space-y-4">
+      {/* {!open && (
         <Pressable
           onPress={() => setOpen(!open)}
           className="rounded-full h-10 w-10 bg-white self-end flex items-center justify-center pt-1.5"
         >
           <Text className="text-3xl">^</Text>
         </Pressable>
-      )}
+      )} */}
 
       <View className="border flex flex-row  justify-between border-white py-2 px-4  rounded-3xl ">
         <Pressable onPress={() => setIndex(0)}>
