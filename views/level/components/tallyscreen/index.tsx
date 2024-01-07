@@ -9,15 +9,21 @@ import { useSocketcontext } from "../../../../hooks/useSocketContext";
 import { chain } from "lodash";
 import { checkForKey } from "../../../../lib/secure-store";
 
-function FinalTallyScreen({ currentPlayer }: { currentPlayer: playerClass }) {
+function FinalTallyScreen({
+  currentPlayer,
+  score,
+}: {
+  currentPlayer: playerClass;
+  score: number;
+}) {
   const [fetching, setFetching] = useState(false);
-  const [score, setScore] = useState(0);
+  // const [score, setScore] = useState(0);
 
-  useEffect(() => {
-    const score = currentPlayer.tallyScore();
-    setScore(score);
-    console.info("player scored", score);
-  }, []);
+  // useEffect(() => {
+  //   const score = currentPlayer.tallyScore();
+  //   setScore(score);
+  //   console.info("player scored", score);
+  // }, []);
 
   return (
     <View className="flex-1 h-3/5 bg-white mt-10 rounded-lg mx-2  flex justify-center items-center">
@@ -72,6 +78,7 @@ export const TallyScreen = ({
   const [tally, setTally] = useState<null | playerClass[]>(null);
   const [viewingFinalTally, setViewingFinalTally] = useState(false);
   const [finalTally, setFinalTally] = useState(0);
+  const [score, setScore] = useState(0);
 
   const finalTallyRef = useRef(0);
 
@@ -82,12 +89,12 @@ export const TallyScreen = ({
 
   const { description, isReal } = facts ?? {};
 
-  // CHECK FOR UNIQUE CHOICES
-  // CHECK FOR EMPTY CHOICES
-  // CHECK FOR BUSTED CHOICES
-  // TALLY SCORE
-  // CLOSE TALLY SCREEN
-  // OPEN FINAL TALLY SCREEN
+  //* CHECK FOR UNIQUE CHOICES
+  //* CHECK FOR EMPTY CHOICES
+  //* CHECK FOR BUSTED CHOICES
+  //* TALLY SCORE
+  //* CLOSE TALLY SCREEN
+  //* OPEN FINAL TALLY SCREEN
   const handleFinalTally = async (
     playerTally: {
       username: string;
@@ -134,7 +141,8 @@ export const TallyScreen = ({
     // HANDLE SCORING
 
     currentPlayer.checkNonUniqueChoices(currentPlayerTally?.uniqueChoices);
-    currentPlayer.tallyScore();
+    const score = currentPlayer.tallyScore();
+    setScore(score);
     // handleReady(username);
     return p;
   };
@@ -189,7 +197,10 @@ export const TallyScreen = ({
       currentPlayer.populateChoices(currentPlayerTally.choices);
     });
   }
-
+  /*
+   * SENDS READY PLAYER EVENT TO SERVER
+   * HANDLES PLAYERS FINAL TALLY
+   */
   const handleReady = (username: string) => {
     handleFinalTally(tally);
     setTimeout(() => {
@@ -206,7 +217,7 @@ export const TallyScreen = ({
     handleGetTally();
   }, []);
 
-  // LISTEN FOR EVENTS AND HANDLE THEM
+  //* LISTEN FOR EVENTS AND HANDLE THEM
   useEffect(() => {
     //* LISTEN FOR CONTEST EVENTS
     socket?.on("BUSTED_PLAYER", (data) => {
@@ -266,15 +277,9 @@ export const TallyScreen = ({
                   />
                 ))}
 
-                {/* <Button
-                  title="Tally"
-                  // onPress={() => handleReady(currentPlayer.username)}
-                  onPress={() => handleFinalTally(tally)}
-                /> */}
                 <Button
                   title="Ready"
                   onPress={() => handleReady(currentPlayer.username)}
-                  // onPress={() => handleFinalTally(tally)}
                 />
               </>
             )}
@@ -349,7 +354,7 @@ export const TallyScreen = ({
           </View>
         </View>
       ) : (
-        <FinalTallyScreen currentPlayer={currentPlayer} />
+        <FinalTallyScreen score={score} currentPlayer={currentPlayer} />
       )}
     </>
   );

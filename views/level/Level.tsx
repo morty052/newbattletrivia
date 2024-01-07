@@ -64,6 +64,8 @@ const Level = ({ route }: any) => {
    */
 
   const handleFinish = (answers: any) => {
+    // * SEND END_ROUND EVENT TO SERVER
+    // * SEND GAME STATE TO SERVER
     socket?.emit(
       "END_ROUND",
       {

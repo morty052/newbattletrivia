@@ -16,7 +16,7 @@ export const PlayerBar = ({
   player,
   isCurrentPlayer,
 }: Props) => {
-  const { username, points } = player ?? {};
+  const { username, points, score } = player ?? {};
 
   return (
     <View className="flex flex-row items-center justify-between border rounded-lg p-2 my-4">

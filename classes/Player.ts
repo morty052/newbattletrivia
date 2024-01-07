@@ -431,8 +431,6 @@ class Player {
     const score = this.uniqueChoices * pointsPerAnswer;
     // this.checkNonUniqueChoices(allUniqueChoices);
     this.addPoints(score);
-    console.log("score is", score);
-    console.log("unique choices are", this.uniqueChoices);
 
     return score;
   };
