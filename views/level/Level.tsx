@@ -32,23 +32,15 @@ function WaitingScreen(params: type) {
 const Level = ({ route }: any) => {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
-  const [setActiveLetter] = useState("A");
-  const [setSelectingLetter] = useState(true);
-  const [setCurrentTurn] = useState(1);
-  const [setPlayers] = useState<[] | playerClass[]>([]);
-  const [setCurrentPlayer] = useState<playerClass>([] as any);
-  const [setUserId] = useState<number | null>(null);
-  const [setPlaying] = useState(false);
   // const [timeUp, setTimeUp] = useState(false);
-  const [setTallying] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [availableLetters, setAvailableLetters] = useState<string[]>(alphabets);
+  const [levelState, dispatch] = useReducer(levelReducer, state);
 
   const { socket } = useSocketcontext();
 
   const { room_id, public: isPublic } = route.params;
 
-  const [levelState, dispatch] = useReducer(levelReducer, state);
   const { game, tallying, playing, activeLetter, selectingLetter } =
     levelState ?? {};
   const {
@@ -113,13 +105,13 @@ const Level = ({ route }: any) => {
     });
   };
 
-  const handleTurn = (turn: number) => {
-    if (turn > 2) {
-      setCurrentTurn(1);
-      return;
-    }
-    setCurrentTurn(turn);
-  };
+  // const handleTurn = (turn: number) => {
+  //   if (turn > 2) {
+  //     setCurrentTurn(1);
+  //     return;
+  //   }
+  //   setCurrentTurn(turn);
+  // };
 
   /*
    * sets the tallying state to false and sets the selectingLetter state to true
@@ -231,6 +223,7 @@ const Level = ({ route }: any) => {
         )}
         {playing && (
           <AnswerView
+            activeLetter={activeLetter}
             handleFinish={(answers) => handleFinish(answers)}
             room_id={room_id}
             timeUp={timeUp}

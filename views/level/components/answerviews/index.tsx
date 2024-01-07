@@ -309,7 +309,9 @@ export function AnswerView({
   timeUp,
   room_id,
   handleFinish,
+  activeLetter,
 }: {
+  activeLetter: string;
   index: number;
   setIndex: any;
   currentPlayer: playerClass;
@@ -327,6 +329,12 @@ export function AnswerView({
   const emptyAnswers = Object.values(answer).filter((value) => value == "");
 
   function handleSubmit(id: string, choice: string) {
+    // CHECK IF ANSWER INCLUDES ACTIVE LETTER
+    // TODO: ADD UI REACTION TO NOT INCLUDING ACTIVE LETTER
+    if (!choice.toLowerCase().startsWith(activeLetter.toLowerCase())) {
+      return;
+    }
+
     setAnswer((prev) => ({
       ...prev,
       [id]: choice,
