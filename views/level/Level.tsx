@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useReducer, useState } from "react";
 import {
   AnswerView,
   HUD,
@@ -14,6 +14,8 @@ import { initLevel } from "./features/initLevel";
 import { playerClass } from "../../types/player";
 import { useStopWatch } from "../../components";
 import alphabets from "../../constants/alphabets";
+import { Game } from "../../classes/Game";
+import { levelReducer, levelState as state } from "./reducer/levelReducer";
 
 type Props = {};
 
@@ -30,34 +32,35 @@ function WaitingScreen(params: type) {
 const Level = ({ route }: any) => {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
-  const [activeLetter, setActiveLetter] = useState("A");
-  const [selectingLetter, setSelectingLetter] = useState(true);
-  const [currentTurn, setCurrentTurn] = useState(1);
-  const [players, setPlayers] = useState<[] | playerClass[]>([]);
-  const [currentPlayer, setCurrentPlayer] = useState<playerClass>([] as any);
-  const [userId, setUserId] = useState<number | null>(null);
-  const [playing, setPlaying] = useState(false);
+  const [setActiveLetter] = useState("A");
+  const [setSelectingLetter] = useState(true);
+  const [setCurrentTurn] = useState(1);
+  const [setPlayers] = useState<[] | playerClass[]>([]);
+  const [setCurrentPlayer] = useState<playerClass>([] as any);
+  const [setUserId] = useState<number | null>(null);
+  const [setPlaying] = useState(false);
   // const [timeUp, setTimeUp] = useState(false);
-  const [tallying, setTallying] = useState(false);
+  const [setTallying] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [availableLetters, setAvailableLetters] = useState<string[]>(alphabets);
 
   const { socket } = useSocketcontext();
-  const { time, timeUp, setTimeUp } = useStopWatch(playing);
+
   const { room_id, public: isPublic } = route.params;
 
-  // const state = {
-  //   index,
-  //   activeLetter,
-  //   selectingLetter,
-  //   currentTurn,
-  //   // players,
-  //   // currentPlayer,
-  //   userId,
-  //   playing,
-  //   timeUp,
-  //   tallying,
-  // };
+  const [levelState, dispatch] = useReducer(levelReducer, state);
+  const { game, tallying, playing, activeLetter, selectingLetter } =
+    levelState ?? {};
+  const {
+    currentTurn,
+    players,
+    currentPlayer,
+    // timeUp,
+  } = game ?? {};
+
+  const { turn_id: user_turn_id } = currentPlayer ?? {};
+
+  const { time, timeUp, setTimeUp } = useStopWatch(playing);
 
   // const stateView = JSON.stringify(state, null, 2);
 
@@ -81,11 +84,18 @@ const Level = ({ route }: any) => {
       (data: any) => {
         const { turn } = data;
         setWaiting(true);
-        setPlaying(false);
-        setCurrentTurn(turn);
+        // STOP PLAY AND SWITCH TURNS
+        dispatch({ type: "END_ROUND", payload: turn });
+        // setPlaying(false);
+        // setCurrentTurn(turn);
+
+        // * GIVE SERVER TIME TO UPLOAD ALL PLAYERS DATA
         setTimeout(() => {
           setWaiting(false);
-          setTallying(true);
+          // setTallying(true);
+
+          //* dispatch start tally event
+          dispatch({ type: "START_TALLY" });
         }, 3000);
       }
     );
@@ -111,10 +121,16 @@ const Level = ({ route }: any) => {
     setCurrentTurn(turn);
   };
 
+  /*
+   * sets the tallying state to false and sets the selectingLetter state to true
+   * sets index to 0
+   */
+
   const handleFinishTally = () => {
     setIndex(0);
-    setTallying(false);
-    setSelectingLetter(true);
+    dispatch({ type: "FINISH_TALLY" });
+    // setTallying(false);
+    // setSelectingLetter(true);
   };
 
   /**
@@ -124,12 +140,12 @@ const Level = ({ route }: any) => {
    * @return {Promise<void>} A promise that resolves when the initialization is complete.
    */
   const handleInit = async () => {
-    const { players, maxTurns, turn_id, currentPlayer } = await initLevel(
-      room_id
-    );
-    setPlayers(players);
-    setUserId(turn_id);
-    setCurrentPlayer(currentPlayer);
+    const { NewGame } = (await initLevel(room_id)) ?? {};
+    // setGame(NewGame);
+    dispatch({ type: "INIT", payload: NewGame });
+    // setPlayers(players);
+    // setUserId(turn_id);
+    // setCurrentPlayer(currentPlayer);
     socket?.emit("PING_ROOM", { room_id });
     // setPlaying(true);
   };
@@ -144,8 +160,9 @@ const Level = ({ route }: any) => {
   useEffect(() => {
     socket?.on("SWITCH_TURN", (data: any) => {
       const { turn } = data;
-      handleTurn(turn);
-      setSelectingLetter(true);
+      dispatch({ type: "SWITCH_TURN", payload: turn });
+      // handleTurn(turn);
+      // setSelectingLetter(true);
     });
 
     /*
@@ -153,17 +170,18 @@ const Level = ({ route }: any) => {
      * sets the active letter to the letter provided
      * sets the playing state to true
      */
+    // TODO: REMOVE SELECTED LETTER FROM AVAILABLE LETTERS
     socket?.on("SWITCH_LETTER", (data: any) => {
       const { letter } = data;
-      setActiveLetter(letter);
+      // setActiveLetter(letter);
+      dispatch({ type: "SWITCH_LETTER", payload: letter });
       const newLetters = availableLetters.splice(
         availableLetters.indexOf(letter),
         1
       );
-      console.log(availableLetters);
-      setSelectingLetter(false);
-      setTallying(false);
-      setPlaying(true);
+      // setSelectingLetter(false);
+      // setTallying(false);
+      // setPlaying(true);
     });
 
     /*
@@ -175,9 +193,10 @@ const Level = ({ route }: any) => {
 
     socket?.on("ROUND_ENDED", (data: any) => {
       const { turn } = data;
-      setCurrentTurn(turn);
-      setPlaying(false);
-      setTallying(true);
+      dispatch({ type: "ROUND_ENDED", payload: turn });
+      // setCurrentTurn(turn);
+      // setPlaying(false);
+      // setTallying(true);
     });
   }, [socket]);
 
@@ -188,7 +207,7 @@ const Level = ({ route }: any) => {
     3: "bg-purple-400",
   };
 
-  if (players.length < 1) {
+  if (!levelState.players) {
     return <Loader />;
   }
 
@@ -232,11 +251,11 @@ const Level = ({ route }: any) => {
         <WaitScreen
           alphabets={availableLetters}
           handleLetterSelect={(letter: string) => handleLetterSelect(letter)}
-          userId={userId}
-          turnId={currentTurn}
+          user_turn_id={user_turn_id}
+          turn_id={currentTurn}
           selectingLetter={selectingLetter}
         />
-        {/* <Text>{stateView}</Text> */}
+
         {!tallying && (
           <OptionPicker setIndex={setIndex} open={open} setOpen={setOpen} />
         )}

@@ -6,6 +6,8 @@ import { Button, Loader } from "../../../../components";
 import { getPlayer, handleAnswerContest } from "../../features/levelActions";
 import { playerClass } from "../../../../types/player";
 import { useSocketcontext } from "../../../../hooks/useSocketContext";
+import { chain } from "lodash";
+import { checkForKey } from "../../../../lib/secure-store";
 
 function FinalTallyScreen({ currentPlayer }: { currentPlayer: playerClass }) {
   const [fetching, setFetching] = useState(false);
@@ -80,32 +82,61 @@ export const TallyScreen = ({
 
   const { description, isReal } = facts ?? {};
 
-  const handleNonUniqueChoices = (
+  // CHECK FOR UNIQUE CHOICES
+  // CHECK FOR EMPTY CHOICES
+  // CHECK FOR BUSTED CHOICES
+  // TALLY SCORE
+  // CLOSE TALLY SCREEN
+  // OPEN FINAL TALLY SCREEN
+  const handleFinalTally = async (
     playerTally: {
       username: string;
-      choices: { [key: string]: string }[];
+      choices: any;
     }[]
   ) => {
-    const uniqueChoices = playerTally
-      .map((player) => Object.values(player.choices).filter((v) => v !== ""))
-      .flat();
+    // TURN ALL CHOICES INTO ARRAY
+    const choices = playerTally
+      .map((player) => Object.values(player.choices))
+      .flat()
+      .filter((c) => c !== "" || "BUSTED");
 
-    let results: string[] = [];
-    const nonUniqueChoices = uniqueChoices.map((choice) => {
-      if (uniqueChoices.filter((c) => c == choice).length > 1) {
-        return results.push(choice);
-      }
+    // MAKE NEW ARRAY TO CHECK IF EACH PLAYERS CHOICE APPEARS IN CHOICES ARRAY MORE THAN ONCE
+    const p = playerTally.map((player) => {
+      // GET PLAYER CHOICES
+      const playerChoices = Object.values(player.choices);
+      // FILTER OUT USELESS CHOICES
+      const validChoices = playerChoices.filter((c) => c !== "" || "BUSTED");
+
+      // CHECK IF CHOICE APPEARS IN CHOICES ARRAY MORE THAN ONCE
+      const uniqueChoices = validChoices
+        .map((c) => {
+          if (choices.filter((choice) => choice === c).length > 1) {
+            return "Duplicate";
+          }
+          return c;
+        })
+        .filter((c) => c != "Duplicate");
+
+      return {
+        username: player.username,
+        choices: player.choices,
+        uniqueChoices,
+      };
     });
 
-    const updatedTally = playerTally.map((player) => {
-      // @ts-expect-error
-      if (Object.values(player.choices).includes(...results)) {
-        return "MATCH";
-      }
-      return player;
-    });
+    // const { username } = (await checkForKey()) ?? {};
 
-    console.log("updatedTally", updatedTally);
+    // GET THE CURRENT PLAYER WITH UNIQUE CHOICE FIELD ADDED POPULATED WITH UNIQUE CHOICES
+    const currentPlayerTally = p.find(
+      (player) => player.username == currentPlayer.username
+    );
+
+    // HANDLE SCORING
+
+    currentPlayer.checkNonUniqueChoices(currentPlayerTally?.uniqueChoices);
+    currentPlayer.tallyScore();
+    // handleReady(username);
+    return p;
   };
 
   const handleBust = (username: string, label: any) => {
@@ -160,9 +191,12 @@ export const TallyScreen = ({
   }
 
   const handleReady = (username: string) => {
-    socket?.emit("READY_PLAYER", { username, room_id }, (res) => {
-      console.info(res);
-    });
+    handleFinalTally(tally);
+    setTimeout(() => {
+      socket?.emit("READY_PLAYER", { username, room_id }, (res) => {
+        console.info(res);
+      });
+    }, 1000);
   };
 
   /*
@@ -172,7 +206,9 @@ export const TallyScreen = ({
     handleGetTally();
   }, []);
 
+  // LISTEN FOR EVENTS AND HANDLE THEM
   useEffect(() => {
+    //* LISTEN FOR CONTEST EVENTS
     socket?.on("BUSTED_PLAYER", (data) => {
       console.info("busted player", currentPlayer?.username);
       const { updatedTally, username, labelToChange } = data;
@@ -195,6 +231,7 @@ export const TallyScreen = ({
      * handles all players ready event from server
      */
 
+    // TODO: CHANGE ALL USER STATUS TO NOT READY
     socket?.on("ALL_PLAYERS_READY", (data: any) => {
       setViewingFinalTally(true);
       setTimeout(() => {
@@ -229,10 +266,15 @@ export const TallyScreen = ({
                   />
                 ))}
 
+                {/* <Button
+                  title="Tally"
+                  // onPress={() => handleReady(currentPlayer.username)}
+                  onPress={() => handleFinalTally(tally)}
+                /> */}
                 <Button
                   title="Ready"
-                  // onPress={() => handleReady(currentPlayer.username)}
-                  onPress={() => handleNonUniqueChoices(tally)}
+                  onPress={() => handleReady(currentPlayer.username)}
+                  // onPress={() => handleFinalTally(tally)}
                 />
               </>
             )}

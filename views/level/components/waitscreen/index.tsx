@@ -56,14 +56,14 @@ function WaitingView({
 }
 
 export function WaitScreen({
-  userId,
-  turnId,
+  user_turn_id,
+  turn_id,
   selectingLetter,
   handleLetterSelect,
   alphabets,
 }: {
-  userId: number | null;
-  turnId: number;
+  user_turn_id: number | null;
+  turn_id: number;
   selectingLetter: boolean;
   handleLetterSelect: (letter: string) => void;
   alphabets: string[];
@@ -72,14 +72,14 @@ export function WaitScreen({
 
   return (
     <>
-      {selectingLetter && userId == turnId && (
+      {selectingLetter && user_turn_id == turn_id && (
         <LetterSelectScreen
           alphabets={alphabets}
           handleFinish={(letter) => handleLetterSelect(letter)}
         />
       )}
 
-      {selectingLetter && userId != turnId && (
+      {selectingLetter && user_turn_id != turn_id && (
         <WaitingView setFinished={setFinished} />
       )}
     </>

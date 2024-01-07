@@ -1,5 +1,6 @@
 import { checkForKey } from "../../../lib/secure-store";
 import { setPlayer } from "./setPlayer";
+import { Game } from "../../../classes/Game";
 
 interface initLevelProps {
   room_id: string;
@@ -63,11 +64,22 @@ export const initLevel = async (room_id: string) => {
     const turn_id = rawTurn_id + 1;
     // setUserId(turn_id + 1);
 
+    const { username } = (await checkForKey()) ?? {};
+    if (!username) {
+      throw "No username found";
+    }
+
+    const NewGame = new Game({
+      players,
+      currentUsername: username,
+    });
+
     return {
       players,
       maxTurns,
       turn_id,
       currentPlayer,
+      NewGame,
     };
   } catch (error) {
     console.error(error);

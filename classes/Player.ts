@@ -342,11 +342,13 @@ class Player {
     place: "",
     thing: "",
   };
+  uniqueChoices: number;
   constructor({ username, turn_id, status, points }: user) {
     this.turn_id = turn_id;
     this.username = username;
     this.status = status;
     this.points = points;
+    this.uniqueChoices = 0;
   }
 
   populateChoices = (choices: {
@@ -363,7 +365,6 @@ class Player {
     answer: string
   ) => {
     this.choices[label] = answer;
-    console.info("this player chose", answer);
   };
 
   clearChoices = () => {
@@ -380,9 +381,15 @@ class Player {
       (key) => key == keyToFind
     );
 
-    this.choices[keyToClear] = "BUSTED";
+    this.choices[keyToClear as keyof typeof this.choices] = "BUSTED";
 
     console.log(keyToClear);
+  };
+
+  flagSingleChoice = (keyToFind: string) => {
+    const keyToFlag = Object.keys(this.choices).find((key) => key == keyToFind);
+
+    this.choices[keyToFlag as keyof typeof this.choices] = "FLAGGED";
   };
 
   addPoints = (score: number) => {
@@ -393,6 +400,7 @@ class Player {
     this.points -= 10;
   };
 
+  // * CHECK FOR EMPTY CHOICES, AND BUSTED
   checkEmptyChoices = () => {
     const emptyAnswers = Object.values(this.choices).filter(
       (value) => value == "" || value == "BUSTED"
@@ -405,14 +413,26 @@ class Player {
     }
   };
 
-  tallyScore = () => {
+  checkNonUniqueChoices = (allUniqueChoices: string[]) => {
+    // GET PLAYERS UNIQUE CHOICES
+    const uniqueChoices = allUniqueChoices.filter((choice) =>
+      Object.values(this.choices).includes(choice)
+    );
+
+    // SET PLAYERS UNIQUE CHOICES PROPERTY TO UNIQUE CHOICES LENGTH
+    this.uniqueChoices = uniqueChoices.length;
+  };
+
+  // TODO : REDUCE SCORE BY SOMETHING FOR DUPLICATE  CHOICES
+  tallyScore = (allUniqueChoices: string[]) => {
     const pointsPerAnswer = 50;
     const emptyAnswers = this.checkEmptyChoices();
     const maxpoints = 4 - emptyAnswers;
-    const score = maxpoints * pointsPerAnswer;
-
+    const score = this.uniqueChoices * pointsPerAnswer;
+    // this.checkNonUniqueChoices(allUniqueChoices);
     this.addPoints(score);
-    console.log(score);
+    console.log("score is", score);
+    console.log("unique choices are", this.uniqueChoices);
 
     return score;
   };
