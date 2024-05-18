@@ -74,10 +74,8 @@ export const TallyScreen = ({
   const [inspecting, setInspecting] = useState<null | playerClass>(null);
   const [contesting, setContesting] = useState(false);
   const [facts, setFacts] = useState<null | fact>(null);
-  // const [currentPlayer, setCurrentPlayer] = useState<null | playerClass>(null);
   const [tally, setTally] = useState<null | playerClass[]>(null);
   const [viewingFinalTally, setViewingFinalTally] = useState(false);
-  const [finalTally, setFinalTally] = useState(0);
   const [score, setScore] = useState(0);
 
   const finalTallyRef = useRef(0);
@@ -172,17 +170,22 @@ export const TallyScreen = ({
     });
   };
 
+  /**
+   * Handles the contest by submitting the answer and label.
+   *
+   * @param {string} answer - The answer to the contest question.
+   * @param {labelNames} label - The label of the contest.
+   * @return {void} Does not return a value.
+   */
   async function handleContest(answer: string, label: labelNames) {
-    const isReal = await handleAnswerContest(answer, label, {
-      setContesting,
-      setFacts,
-    });
+    setContesting(true);
+    const { status, facts } = (await handleAnswerContest(answer, label)) ?? {};
 
-    if (isReal) {
+    if (status == "CORRECT") {
       console.log("Correct check came back as", isReal);
-    }
-
-    if (!isReal) {
+      setFacts(facts);
+      return;
+    } else if (status == "INCORRECT") {
       handleBust(username as string, label);
     }
   }

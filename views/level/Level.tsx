@@ -7,7 +7,14 @@ import {
   TallyScreen,
   WaitScreen,
 } from "./components";
-import { View, Button, Text, Pressable } from "react-native";
+import {
+  View,
+  Button,
+  Text,
+  Pressable,
+  Alert,
+  BackHandler,
+} from "react-native";
 import { useSocketcontext } from "../../hooks/useSocketContext";
 import { Loader, Screen } from "../../components";
 import { initLevel } from "./features/initLevel";
@@ -29,7 +36,7 @@ function WaitingScreen(params: type) {
 
 // TODO: REFACTOR STATES TO SINGLE OBJECT
 
-const Level = ({ route }: any) => {
+const Level = ({ route, navigation }: any) => {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   // const [timeUp, setTimeUp] = useState(false);
@@ -193,6 +200,42 @@ const Level = ({ route }: any) => {
       // setTallying(true);
     });
   }, [socket]);
+
+  useEffect(() => {
+    navigation.addListener("beforeRemove", () => {
+      Alert.alert(
+        "Discard changes?",
+        "You have unsaved changes. Are you sure to discard them and leave the screen?",
+        [
+          { text: "Don't leave", style: "cancel", onPress: () => {} },
+          {
+            text: "Discard",
+            style: "destructive",
+            // If the user confirmed, then we dispatch the action we blocked earlier
+            // This will continue the action that had triggered the removal of the screen
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
+      const backAction = () => {
+        Alert.alert("Hold on!", "Are you sure you want to go back?", [
+          {
+            text: "Cancel",
+            onPress: () => null,
+            style: "cancel",
+          },
+          { text: "YES", onPress: () => navigation.goBack() },
+        ]);
+        return true;
+      };
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
+      );
+
+      return () => backHandler.remove();
+    });
+  }, []);
 
   const indexColor: any = {
     0: "bg-sky-400",

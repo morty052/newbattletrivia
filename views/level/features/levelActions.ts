@@ -35,14 +35,7 @@ type handleContestProps = {
   // currentPlayer: null | playerClass;
 };
 
-export async function handleAnswerContest(
-  answer: string,
-  label: labelNames,
-  props: handleContestProps
-) {
-  const { setContesting, setFacts } = props;
-  setContesting(true);
-
+export async function handleAnswerContest(answer: string, label: labelNames) {
   const queryLabel = label.toLowerCase();
   const query = `check${queryLabel}?${queryLabel}=${answer}`;
   const baseUrl = `http://192.168.100.16:3000/ai/${query}`;
@@ -50,14 +43,20 @@ export async function handleAnswerContest(
   try {
     const response = await fetch(baseUrl);
     const data = await response.json();
-    setFacts(data);
+    // setFacts(data);
     const { isReal } = data;
 
     if (!isReal) {
-      return false;
+      return {
+        status: "INCORRECT",
+        facts: data,
+      };
     }
 
-    return true;
+    return {
+      status: "CORRECT",
+      facts: data,
+    };
   } catch (error) {
     console.error(error);
   }

@@ -265,7 +265,7 @@ function Menu() {
         component={RecordingScreen}
       />
       <Stack.Screen
-        options={{ headerShown: false }}
+        options={{ headerShown: false, gestureEnabled: false }}
         name="Publicmatch"
         component={PublicMatch}
       />
